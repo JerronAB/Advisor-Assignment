@@ -1,0 +1,8 @@
+# Ignore .env file
+#.env
+
+#Other files
+De-Duplicating.txt
+*.csv
+scheduled_check.ps1
+__pycache__/*
