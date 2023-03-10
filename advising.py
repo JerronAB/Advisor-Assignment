@@ -1,8 +1,5 @@
 #Use map more often than list generators
 #CSV Data exports directly--line by line--into SQL, so a middle-man isn't necessarily advantageous. 
-#Where should my exception management occur? Where should my deduping occur?
-
-#RE-EVAL all logic; what's a good way to see an outline of this?
 
 class AdvisableSet: #functionality: store and maintain advisors and their programs; use function to determine if program or advisor is present
     def __init__(self, name=None) -> None:
@@ -13,7 +10,7 @@ class AdvisableSet: #functionality: store and maintain advisors and their progra
     def addAdvisors(self, advisors):
         if type(advisors) is list: [self.Advisors.append(adv) for adv in advisors]
         if type(advisors) is str: self.Advisors.append(advisors)
-        for advisor in self.Advisors: #ran out of brain power. Make this better. 
+        for advisor in self.Advisors:
             if advisor not in self.advisorCounts: self.advisorCounts[advisor] = 0
     def addPrograms(self, programs):
         if all(type(item) is list for item in programs): [self.Programs.append(item) for item in programs]
@@ -67,13 +64,12 @@ class AdvisorAPI: #this "API" maintains a dictionary of AdvisableSet instances, 
     def setAdvisorCount(self, advisor, number):
         for set in self.AdvisableSets:
             if self.AdvisableSets[set].testAdvisor(advisor): self.AdvisableSets[set].setAdvisorCount(advisor, number)
-#not sure where I'll be adding in exception management (counseling or advexemption list) or advisor counting; locus in the CSV import?
 
 #SQLITE3 section
 import sqlite3 as sqlt
-class SQLInstance: #this will be less monstrous if we abstract it, too; use for error-checking and formatting? 
+class SQLInstance:
     def __init__(self, db_filename=':memory:') -> None: #CONTENT validation
-        self.conn = sqlt.connect(db_filename) #do we want more features here? Like more complex table renaming?
+        self.conn = sqlt.connect(db_filename)
         self.cursor = self.conn.cursor()
         self.dbname = db_filename
         self.tables = []
@@ -104,10 +100,10 @@ class SQLAPI: #COMMAND validation
         if not all(type(item) is list for item in rows): raise TypeError('rows must be a list of lists. ')
         if not type(headers_list) is list: raise TypeError('headers_list Must be a list. ')
         if table_name not in self.tables: self.addTable(table_name,headers_list)
-        [self.addRow(table_name,row) for row in rows] #gotta be a more efficient way to do this; map maybe?
+        [self.addRow(table_name,row) for row in rows] #gotta be a more efficient way to do this stuff; map maybe?
     def arbitraryExecute(self, command):
         self.instance.cursor.execute(command)
-    def export(self, table_name, select_statement='*',where_statement=''): #this is currently limited to just exporting a table
+    def export(self, table_name, select_statement='*',where_statement=''):
         table_name = self.instance.nameFormat(table_name)
         header_list = [header[1] for header in self.instance.cursor.execute(f'PRAGMA table_info ({table_name})')]
         data_to_export = [list(item) for item in self.instance.cursor.execute(f'SELECT {select_statement} FROM {table_name} {where_statement}')] #I think I'm performing unnecessary operations here; can be paired down to a simple list comp
@@ -115,7 +111,7 @@ class SQLAPI: #COMMAND validation
         return data_to_export
 
 from csv import reader,writer
-class CSVObject: #inheritable class
+class CSVObject: #inheritable class (hopefully)
     def __init__(self, filename) -> None:
         self.filename = filename
         self.name = filename.split('\\')[-1].replace('.csv','')

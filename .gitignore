@@ -1,5 +1,5 @@
 # Ignore .env file
-#.env
+.env
 
 #Other files
 De-Duplicating.txt
