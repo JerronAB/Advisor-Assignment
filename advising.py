@@ -78,6 +78,7 @@ class SQLInstance: #this will be less monstrous if we abstract it, too; use for 
         self.valuesFormat = lambda items_list: ', '.join([f'\'{item}\'' for item in items_list])
         self.nameFormat = lambda table_name: table_name.replace(".csv","").replace(" ","_") #handles our table title renaming logic internally
     def addTable(self, table_name, headers_list):
+        print(f'CREATE TABLE {self.nameFormat(table_name)} ({self.valuesFormat(headers_list)})')
         self.cursor.execute(f"CREATE TABLE {self.nameFormat(table_name)} ({self.valuesFormat(headers_list)})")
     def addRow(self, table_name, import_row):
         try:
@@ -130,12 +131,15 @@ class complexList:
         else: return [mappedFunction(row) for row in self.Data if row is not None]
     def integrityCheck(self):
         if not all(type(line) is list for line in self.Data): raise TypeError("complexList data must be a list of lists.")
+    def deDup(self, dedupColumn,sortFunc=None):
+        if sortFunc is None: 
+            pass
+        else:
+            pass
 
 from csv import reader,writer
 class CSVObject: #creates and interacts with complexList object
     def __init__(self, filename=None,csvData=None,csvColumns=None) -> None:
-        self.filename = filename
-        self.name = filename.replace('.csv','')
         self.new_complexList = complexList()
         if filename is not None: self.fileIntake(filename)
         else:
@@ -146,12 +150,14 @@ class CSVObject: #creates and interacts with complexList object
     def fileIntake(self, filename):
         with open(filename, 'r', encoding='ISO-8859-1') as csvfile: #UTF-8
                 self.filename = filename
-                self.name = filename.replace('.csv','')
+                newname = filename.split('\\')
+                self.name = newname[-1].replace('.csv','')
                 csvData = [row for row in reader(csvfile)]
                 self.new_complexList.Columns = list(map(lambda input_str: input_str.replace("ï»¿",""), csvData.pop(0)))
                 self.new_complexList.addData(csvData)
     def mapRows(self, mappedFunction, changeInPlace=False):
-        self.new_complexList.mapRows(mappedFunction,inPlace=changeInPlace)
+        if changeInPlace is True: self.new_complexList.mapRows(mappedFunction,inPlace=changeInPlace)
+        else: return self.new_complexList.mapRows(mappedFunction,inPlace=changeInPlace)
     def mappedExport(self, mappedFunction,exportFile=None):
         self.new_complexList.mapRows(mappedFunction=mappedFunction,inPlace=True)
         if exportFile is not None: self.export(exportFile)
@@ -161,58 +167,3 @@ class CSVObject: #creates and interacts with complexList object
             self.new_complexList.Data.insert(0,self.new_complexList.Columns)
             for row in self.new_complexList.Data:
                 my_writer.writerow(row)
-
-advisorAPI = AdvisorAPI()
-def advisorDecision(row):
-    #print(f'Running ADIVSORDECISION function--- {row}')
-    if row[0] != '' and row[1] == '' and row[2] == '':
-        #print(f'New program identified: {row[0]}')
-        advisorAPI.latestProgramName = row[0] #doing this so that I don't have to initialize an unnecesary global var
-        advisorAPI.newSet(row[0])
-    elif row[1] != '':
-        #print(f'Advisor identified: {row[1]}')
-        advisorAPI.addAdvisors(advisorAPI.latestProgramName,row[1])
-    if row[2] != '':
-        #print(f'New Program Matrix: {[row[2],row[3],row[4]]}')
-        advisorAPI.addProgram(advisorAPI.latestProgramName,[row[2],row[3],row[4]])
-
-AdvisorList = CSVObject("AdvisorList.csv")
-print(AdvisorList.new_complexList.Columns)
-print(AdvisorList.new_complexList.Data)
-AdvisorList.mapRows(advisorDecision)
-
-advisorSQLDB = SQLAPI()
-importableCSVs = ['Current Term OWTCTR.csv','Previous Term.csv','Personal Email.csv','SI_Probation.csv','SGRP with date.csv','Current Term Enrollment.csv','Current Term.csv','Advisor Assignment Count.csv']
-for item in importableCSVs: #can't seem to use this w/ lambda and map
-    csvObj = CSVObject(item)
-    advisorSQLDB.addRows(csvObj.name,csvObj.Data,csvObj.Columns)
-#list(map(lambda file_name: advisorSQLDB.addRows(CSVObject(file_name).name,CSVObject(file_name).csvData,CSVObject(file_name).columnNames), importableCSVs))
-
-advisorSQLDB.arbitraryExecute('''CREATE TABLE all_assignments AS SELECT current_term.EMPLID, current_term.STUDENT_NAME, current_term.ADVISOR_ID, current_term.ADVISOR_NAME, current_term.DESCR2, current_term.SUBPLAN_DESCR, sgrp_with_date.STDGR_STDNT_GROUP, sgrp_with_date.STDGR_STDNT_GROUP_LDESC, current_term.STDNT_ENRL_STATUS, current_term_enrollment.ENRL_ADD_DT, sgrp_with_date.EFFDT, SI_Probation.SRVC_IND_CD, SI_Probation.SRVC_IND_REFRNCE, current_term.K_HOME_CAMPUS, previous_term.REQ_TERM, current_term.ACTION_DT, current_term.PROG_ACTION, current_term.STDNT_CAR_NBR
-FROM (((((current_term LEFT JOIN previous_term ON current_term.EMPLID = previous_term.EMPLID) LEFT JOIN sgrp_with_date ON current_term.EMPLID = sgrp_with_date.EMPLID) LEFT JOIN SI_Probation ON current_term.EMPLID = SI_Probation.EMPLID) LEFT JOIN personal_email ON current_term.EMPLID = personal_email.EMPLID) LEFT JOIN current_term_enrollment ON current_term.EMPLID = current_term_enrollment.EMPLID) LEFT JOIN current_term_owtctr ON current_term.EMPLID = current_term_OWTCTR.EMPLID ORDER BY current_term_enrollment.ENRL_ADD_DT DESC;''')
-
-exemptions = CSVObject("AdvExemptions.csv")
-
-all_assignments = complexList()
-all_assignments.addData(advisorSQLDB.export('all_assignments',where_statement="ORDER BY EMPLID")) #list of list of items from table
-untouched_advisors = ['Tipmore,  Barbara','Barnett,  Karri Sloan','Stiff,  Amy Fogle','Bruner,  Mary Rhinerson','Greer,  Lindsey Kay','Edwards,  Katlyn Denise']
-sortem = lambda row: row if row[8] == 'E' and row[3] not in untouched_advisors else [None]
-all_assignments_filtered = complexList()
-all_assignments_filtered.addData(all_assignments.mapRows(sortem,False))
-
-
-exit()
-
-global_row_temp = ''
-for row in all_assignments_filtered: #getting janky again here
-    findCells = lambda line: (line[0],[line[4],line[5],line[6]])
-    advisorCell,programCells = findCells(row)
-    if global_row_temp == advisorCell: 
-        all_assignments.Data.remove(row)
-        break
-    if row[0] in exemptions.Data[0]: row.insert(0,f'Exception with: {exemptions.Data[3]} Reason: {exemptions.Data[4]}')
-    global_row_temp = advisorCell
-    row.insert(0,advisorAPI.testProgramAdvisor(advisorCell,programCells))
-
-header_list = all_assignments.pop(0)
-header_list.insert(0,"Advisor Suggestion:")
