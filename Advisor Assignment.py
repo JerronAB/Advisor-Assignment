@@ -3,7 +3,7 @@ import advising
 envDict = {}
 with open('.env') as envFile:
     for line in envFile:
-        key, value = line.strip().split('=')
+        if line[0] != "#": key, value = line.strip().split('=')
         envDict[key.strip()] = value.strip()
 
 [print(f'{key}: {envDict[key]}') for key in envDict]
@@ -44,6 +44,7 @@ for row in all_assignments_filtered: #getting janky again here
     advisorCell,programCells = findCells(row)
     if row[0] in exemptions.csvData[0]: row.insert(0,f'Exception with: {exemptions.csvData[3]} Reason: {exemptions.csvData[4]}')
     global_row_temp = row[0]
+    advisorAPI.incrementAdvisor(advisorCell)
     row.insert(0,advisorAPI.testProgramAdvisor(advisorCell,programCells))
 
 header_list = all_assignments.pop(0)
