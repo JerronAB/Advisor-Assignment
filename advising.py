@@ -1,5 +1,6 @@
 #Use map more often than list generators
 #CSV Data exports directly--line by line--into SQL, so a middle-man isn't necessarily advantageous. 
+#Where should my exception management occur? Where should my deduping occur?
 
 class AdvisableSet: #functionality: store and maintain advisors and their programs; use function to determine if program or advisor is present
     def __init__(self, name=None) -> None:
@@ -10,7 +11,7 @@ class AdvisableSet: #functionality: store and maintain advisors and their progra
     def addAdvisors(self, advisors):
         if type(advisors) is list: [self.Advisors.append(adv) for adv in advisors]
         if type(advisors) is str: self.Advisors.append(advisors)
-        for advisor in self.Advisors:
+        for advisor in self.Advisors: #ran out of brain power. Make this better. 
             if advisor not in self.advisorCounts: self.advisorCounts[advisor] = 0
     def addPrograms(self, programs):
         if all(type(item) is list for item in programs): [self.Programs.append(item) for item in programs]
@@ -64,18 +65,20 @@ class AdvisorAPI: #this "API" maintains a dictionary of AdvisableSet instances, 
     def setAdvisorCount(self, advisor, number):
         for set in self.AdvisableSets:
             if self.AdvisableSets[set].testAdvisor(advisor): self.AdvisableSets[set].setAdvisorCount(advisor, number)
+#not sure where I'll be adding in exception management (counseling or advexemption list) or advisor counting; locus in the CSV import?
 
 #SQLITE3 section
 import sqlite3 as sqlt
-class SQLInstance:
+class SQLInstance: #this will be less monstrous if we abstract it, too; use for error-checking and formatting? 
     def __init__(self, db_filename=':memory:') -> None: #CONTENT validation
-        self.conn = sqlt.connect(db_filename)
+        self.conn = sqlt.connect(db_filename) #do we want more features here? Like more complex table renaming?
         self.cursor = self.conn.cursor()
         self.dbname = db_filename
         self.tables = []
         self.valuesFormat = lambda items_list: ', '.join([f'\'{item}\'' for item in items_list])
         self.nameFormat = lambda table_name: table_name.replace(".csv","").replace(" ","_") #handles our table title renaming logic internally
     def addTable(self, table_name, headers_list):
+        print(f'CREATE TABLE {self.nameFormat(table_name)} ({self.valuesFormat(headers_list)})')
         self.cursor.execute(f"CREATE TABLE {self.nameFormat(table_name)} ({self.valuesFormat(headers_list)})")
     def addRow(self, table_name, import_row):
         try:
@@ -100,34 +103,67 @@ class SQLAPI: #COMMAND validation
         if not all(type(item) is list for item in rows): raise TypeError('rows must be a list of lists. ')
         if not type(headers_list) is list: raise TypeError('headers_list Must be a list. ')
         if table_name not in self.tables: self.addTable(table_name,headers_list)
-        [self.addRow(table_name,row) for row in rows] #gotta be a more efficient way to do this stuff; map maybe?
+        [self.addRow(table_name,row) for row in rows] #gotta be a more efficient way to do this; map maybe?
     def arbitraryExecute(self, command):
         self.instance.cursor.execute(command)
-    def export(self, table_name, select_statement='*',where_statement=''):
+    def export(self, table_name, select_statement='*',where_statement=''): #this is currently limited to just exporting a table
         table_name = self.instance.nameFormat(table_name)
         header_list = [header[1] for header in self.instance.cursor.execute(f'PRAGMA table_info ({table_name})')]
         data_to_export = [list(item) for item in self.instance.cursor.execute(f'SELECT {select_statement} FROM {table_name} {where_statement}')] #I think I'm performing unnecessary operations here; can be paired down to a simple list comp
         data_to_export.insert(0,header_list)
         return data_to_export
 
+class complexList:
+    def __init__(self) -> None:
+        self.Data = []
+        self.Columns = []
+    def addData(self, data):
+        try:
+            self.Data = [item for item in data]
+            self.integrityCheck()
+        except:
+            self.Data = data
+            self.integrityCheck()
+    def mapRows(self, mappedFunction, inPlace=False):
+        print(f'Function being passed: {mappedFunction}')
+        print(f'Modifying in-place: {inPlace}')
+        if inPlace is True: self.Data = [mappedFunction(row) for row in self.Data if row is not None]
+        else: return [mappedFunction(row) for row in self.Data if row is not None]
+    def integrityCheck(self):
+        if not all(type(line) is list for line in self.Data): raise TypeError("complexList data must be a list of lists.")
+    def deDup(self, dedupColumn,sortFunc=None):
+        if sortFunc is None: 
+            pass
+        else:
+            pass
+
 from csv import reader,writer
-class CSVObject: #inheritable class (hopefully)
-    def __init__(self, filename) -> None:
-        self.filename = filename
-        self.name = filename.split('\\')[-1].replace('.csv','')
-        self.csvData = []
-        self.columnNames = []
-        with open(self.filename, 'r', encoding='ISO-8859-1') as csvfile: #UTF-8
-            self.csvData = [row for row in reader(csvfile)]
-            self.columnNames = list(map(lambda input_str: input_str.replace("ï»¿",""), self.csvData.pop(0)))
-    def mapRows(self, mappedFunction):
-        return [mappedFunction(row) for row in self.csvData] #maybe I should just make a class for manipulating data; each instance can have different functions in them. 
-    def export(self,filename,columnNames=None,intakeData=None): #this way, we can edit data and export existing CSVObjects
-        if intakeData is None: intakeData = self.csvData
-        if columnNames is None: columnNames = self.columnNames
+class CSVObject: #creates and interacts with complexList object
+    def __init__(self, filename=None,csvData=None,csvColumns=None) -> None:
+        self.new_complexList = complexList()
+        if filename is not None: self.fileIntake(filename)
+        else:
+            self.new_complexList.Columns=(csvColumns)
+            self.new_complexList.addData(csvData)
+        self.Data = self.new_complexList.Data
+        self.Columns = self.new_complexList.Columns
+    def fileIntake(self, filename):
+        with open(filename, 'r', encoding='ISO-8859-1') as csvfile: #UTF-8
+                self.filename = filename
+                newname = filename.split('\\')
+                self.name = newname[-1].replace('.csv','')
+                csvData = [row for row in reader(csvfile)]
+                self.new_complexList.Columns = list(map(lambda input_str: input_str.replace("ï»¿",""), csvData.pop(0)))
+                self.new_complexList.addData(csvData)
+    def mapRows(self, mappedFunction, changeInPlace=False):
+        if changeInPlace is True: self.new_complexList.mapRows(mappedFunction,inPlace=changeInPlace)
+        else: return self.new_complexList.mapRows(mappedFunction,inPlace=changeInPlace)
+    def mappedExport(self, mappedFunction,exportFile=None):
+        self.new_complexList.mapRows(mappedFunction=mappedFunction,inPlace=True)
+        if exportFile is not None: self.export(exportFile)
+    def export(self,filename): 
         with open(filename,'w',newline='') as csv_file:
             my_writer = writer(csv_file, delimiter = ',')
-            #map(my_writer.writerow(row),intakeData)
-            intakeData.insert(0,columnNames)
-            for row in intakeData:
+            self.new_complexList.Data.insert(0,self.new_complexList.Columns)
+            for row in self.new_complexList.Data:
                 my_writer.writerow(row)
