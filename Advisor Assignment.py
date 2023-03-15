@@ -38,13 +38,12 @@ all_assignments = advisorSQLDB.export('all_assignments',where_statement="ORDER B
 untouched_advisors = envDict['UNTOUCHABLE_ADVISORS'].split(';')
 all_assignments_filtered = [row for row in all_assignments if row[8] == 'E' and row[3] not in untouched_advisors]# and row[0] not in exemptions.csvData[0]]
 
-global_row_temp = ''
-for row in all_assignments_filtered: #getting janky again here
+global_row_temp = '' #I'll need to have advisorCounting done using complexList, most likely. That'll be best. 
+for row in all_assignments_filtered: 
     findCells = lambda line: (line[3],[line[4],line[5],line[6]])
     advisorCell,programCells = findCells(row)
     if row[0] in exemptions.csvData[0]: row.insert(0,f'Exception with: {exemptions.csvData[3]} Reason: {exemptions.csvData[4]}')
     global_row_temp = row[0]
-    advisorAPI.incrementAdvisor(advisorCell)
     row.insert(0,advisorAPI.testProgramAdvisor(advisorCell,programCells))
 
 header_list = all_assignments.pop(0)
