@@ -40,15 +40,20 @@ all_assignments_filtered = [row for row in all_assignments if row[8] == 'E' and 
 global_row_temp = '' #I'll need to have advisorCounting done using complexList, most likely. That'll be best. 
 for row in all_assignments_filtered: 
     findCells = lambda line: (line[3],[line[4],line[5],line[6]])
-    advisorCell,programCells = findCells(row)
+    advisorCell,programCells = findCells(row) #extract the cells above
     if row[0] in exemptions.Data[0]: row.insert(0,f'Exception with: {exemptions.Data[3]} Reason: {exemptions.Data[4]}')
     global_row_temp = row[0]
-    advisorAPI.incrementAdvisor(advisorCell)
     row.insert(0,advisorAPI.testProgramAdvisor(advisorCell,programCells))
 
+mappedAdvisorCounting = lambda row: advisorAPI.incrementAdvisor(row[4])
+
 header_list = all_assignments.pop(0)
+unfiltered_file = advising.CSVObject(csvData=all_assignments,csvColumns=header_list)
+unfiltered_file.export(f'{envDict["unfiltered_file"]}')
 header_list.insert(0,"Advisor Suggestion:")
-advising.CSVObject(csvData=all_assignments,csvColumns=header_list).export(f'{envDict["unfiltered_file"]}')
-advising.CSVObject(csvData=all_assignments_filtered,csvColumns=header_list).export(f'{envDict["filtered_file"]}')
+filtered_file = advising.CSVObject(csvData=all_assignments_filtered,csvColumns=header_list)
+filtered_file.mapRows(mappedAdvisorCounting)
+print(filtered_file.Columns)
+filtered_file.export(f'{envDict["filtered_file"]}')
 
 exit()
