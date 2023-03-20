@@ -1,10 +1,13 @@
 import advising
 
-envDict = {}
-with open('.env') as envFile:
-    for line in envFile:
-        if line[0] != "#": key, value = line.strip().split('=')
-        envDict[key.strip()] = value.strip()
+try:
+    envDict = {}
+    with open('.env') as envFile:
+        for line in envFile:
+            if line[0] != "#": key, value = line.strip().split('=')
+            envDict[key.strip()] = value.strip()
+except:
+    print('.env file was not found, but is required for this script. Is your Python session running in the correct directory?\n')
 
 [print(f'{key}: {envDict[key]}') for key in envDict]
 
