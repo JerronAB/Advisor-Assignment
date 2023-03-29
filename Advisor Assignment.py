@@ -36,6 +36,7 @@ exemptions = advising.CSVObject(envDict['exemptions'])
 all_assignments = advisorSQLDB.export('all_assignments',where_statement="ORDER BY EMPLID") #list of list of items from table
 untouched_advisors = envDict['UNTOUCHABLE_ADVISORS'].split(';')
 all_assignments_filtered = [row for row in all_assignments if row[8] == 'E' and row[3] not in untouched_advisors]# and row[0] not in exemptions.csvData[0]]
+advisor_counts = advisorSQLDB.export('advisor_assignment_count', where_statement='WHERE STDNT_ENRL_STATUS=Enrolled')
 
 global_row_temp = '' #I'll need to have advisorCounting done using complexList, most likely. That'll be best. 
 for row in all_assignments_filtered: 
