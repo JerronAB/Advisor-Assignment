@@ -53,12 +53,8 @@ for row in all_assignments_filtered:
 mappedAdvisorCounting = lambda row: advisorAPI.incrementAdvisor(row[4])
 
 header_list = all_assignments.pop(0)
-unfiltered_file = advising.CSVObject(csvData=all_assignments,csvColumns=header_list)
-unfiltered_file.export(f'{envDict["unfiltered_file"]}')
+advising.CSVObject(csvData=all_assignments,csvColumns=header_list).export(f'{envDict["unfiltered_file"]}')
 header_list.insert(0,"Advisor Suggestion:")
-filtered_file = advising.CSVObject(csvData=all_assignments_filtered,csvColumns=header_list)
-filtered_file.mapRows(mappedAdvisorCounting)
-print(filtered_file.Columns)
-filtered_file.export(f'{envDict["filtered_file"]}')
+advising.CSVObject(csvData=all_assignments_filtered,csvColumns=header_list).export(f'{envDict["filtered_file"]}')
 
 exit()
