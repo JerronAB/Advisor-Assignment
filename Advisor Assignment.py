@@ -31,7 +31,7 @@ for item in importableCSVs: #can't seem to use this w/ lambda and map
     csvObj = advising.CSVObject(item)
     advisorSQLDB.addRows(csvObj.name,csvObj.Data,csvObj.Columns)
 
-adv_counts = advisorSQLDB.export('advisor_assignment_count', where_statement='WHERE STDNT_ENRL_STATUS=Enrolled') #this stanza shows us our issues with complexList right now
+adv_counts = advisorSQLDB.export('advisor_assignment_count', where_statement='WHERE STDNT_ENRL_STATUS = \'Enrolled\'') #this stanza shows us our issues with complexList right now
 advisor_counts = advising.complexList()
 advisor_counts.Columns = adv_counts.pop(0)
 advisor_counts.addData(adv_counts)
