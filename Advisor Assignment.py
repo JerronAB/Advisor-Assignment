@@ -39,6 +39,7 @@ exemptions = advising.CSVObject(envDict['exemptions'])
 all_assignments = advisorSQLDB.export('all_assignments',where_statement="ORDER BY EMPLID") #list of list of items from table
 untouched_advisors = envDict['UNTOUCHABLE_ADVISORS'].split(';')
 all_assignments_filtered = [row for row in all_assignments if row[8] == 'E' and row[3] not in untouched_advisors]# and row[0] not in exemptions.csvData[0]]
+advisor_counts = advisorSQLDB.export('advisor_assignment_count', where_statement='WHERE STDNT_ENRL_STATUS=Enrolled')
 
 global_row_temp = '' #I'll need to have advisorCounting done using complexList, most likely. That'll be best. 
 for row in all_assignments_filtered: 
@@ -47,12 +48,17 @@ for row in all_assignments_filtered:
     for items in exemptions.Data: #in the future, this should be done with the complexList object, or a method thereof
         if items[0] in row[0]: row.insert(0,f'Exception with: {items[3]} Reason: {items[4]}')
     global_row_temp = row[0]
-    advisorAPI.incrementAdvisor(advisorCell)
     row.insert(0,advisorAPI.testProgramAdvisor(advisorCell,programCells))
 
+mappedAdvisorCounting = lambda row: advisorAPI.incrementAdvisor(row[4])
+
 header_list = all_assignments.pop(0)
+unfiltered_file = advising.CSVObject(csvData=all_assignments,csvColumns=header_list)
+unfiltered_file.export(f'{envDict["unfiltered_file"]}')
 header_list.insert(0,"Advisor Suggestion:")
-advising.CSVObject(csvData=all_assignments,csvColumns=header_list).export(f'{envDict["unfiltered_file"]}')
-advising.CSVObject(csvData=all_assignments_filtered,csvColumns=header_list).export(f'{envDict["filtered_file"]}')
+filtered_file = advising.CSVObject(csvData=all_assignments_filtered,csvColumns=header_list)
+filtered_file.mapRows(mappedAdvisorCounting)
+print(filtered_file.Columns)
+filtered_file.export(f'{envDict["filtered_file"]}')
 
 exit()

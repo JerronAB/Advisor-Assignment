@@ -2,12 +2,12 @@
 #CSV Data exports directly--line by line--into SQL, so a middle-man isn't necessarily advantageous. 
 #Where should my exception management occur? Where should my deduping occur?
 
-class AdvisableSet: #functionality: store and maintain advisors and their programs; use function to determine if program or advisor is present
+class AdvisableSet: #functionality: store and maintain advisors and their programs; determine correct advisor/program
     def __init__(self, name=None) -> None:
         self.name = name
         self.Advisors = []
         self.Programs = []
-        self.advisorCounts = {} #dictionary is my method for setting advisorcounts. It only accesses whenever called, which is good, but is this really the best way? Doesn't matter much because abstractions :)
+        self.advisorCounts = {} #dictionary is my method for setting advisorcounts
     def addAdvisors(self, advisors):
         if type(advisors) is list: [self.Advisors.append(adv) for adv in advisors]
         if type(advisors) is str: self.Advisors.append(advisors)
@@ -25,6 +25,7 @@ class AdvisableSet: #functionality: store and maintain advisors and their progra
         self.advisorCounts[advisor] = int(number)
     def incrementAdvisorCount(self,advisor) -> None:
         self.advisorCounts[advisor] +=1
+        print(f'Advisor: {advisor} Count: {self.advisorCounts[advisor]}')
     def returnAdvisors(self) -> str: #study up on built-in dictionary methods for speed/efficiency
         testExist = lambda advisor: self.AdvisorCount(advisor,0) if advisor not in self.AdvisorCounts else True
         map(testExist,self.Advisors)
@@ -65,7 +66,6 @@ class AdvisorAPI: #this "API" maintains a dictionary of AdvisableSet instances, 
     def setAdvisorCount(self, advisor, number):
         for set in self.AdvisableSets:
             if self.AdvisableSets[set].testAdvisor(advisor): self.AdvisableSets[set].setAdvisorCount(advisor, number)
-#not sure where I'll be adding in exception management (counseling or advexemption list) or advisor counting; locus in the CSV import?
 
 #SQLITE3 section
 import sqlite3 as sqlt
@@ -140,30 +140,32 @@ class complexList:
 from csv import reader,writer
 class CSVObject: #creates and interacts with complexList object
     def __init__(self, filename=None,csvData=None,csvColumns=None) -> None:
-        self.new_complexList = complexList()
+        self.newComplexList = complexList()
         if filename is not None: self.fileIntake(filename)
         else:
-            self.new_complexList.Columns=(csvColumns)
-            self.new_complexList.addData(csvData)
-        self.Data = self.new_complexList.Data
-        self.Columns = self.new_complexList.Columns
+            self.newComplexList.Columns=(csvColumns)
+            self.newComplexList.addData(csvData)
+        self.Data = self.newComplexList.Data
+        self.Columns = self.newComplexList.Columns
     def fileIntake(self, filename):
         with open(filename, 'r', encoding='ISO-8859-1') as csvfile: #UTF-8
                 self.filename = filename
                 newname = filename.split('\\')
                 self.name = newname[-1].replace('.csv','')
                 csvData = [row for row in reader(csvfile)]
-                self.new_complexList.Columns = list(map(lambda input_str: input_str.replace("ï»¿",""), csvData.pop(0)))
-                self.new_complexList.addData(csvData)
+                self.newComplexList.Columns = list(map(lambda input_str: input_str.replace("ï»¿",""), csvData.pop(0)))
+                self.newComplexList.addData(csvData)
     def mapRows(self, mappedFunction, changeInPlace=False):
-        if changeInPlace is True: self.new_complexList.mapRows(mappedFunction,inPlace=changeInPlace)
-        else: return self.new_complexList.mapRows(mappedFunction,inPlace=changeInPlace)
+        if changeInPlace is True: self.newComplexList.mapRows(mappedFunction,inPlace=changeInPlace)
+        else: return self.newComplexList.mapRows(mappedFunction,inPlace=changeInPlace)
     def mappedExport(self, mappedFunction,exportFile=None):
-        self.new_complexList.mapRows(mappedFunction=mappedFunction,inPlace=True)
+        self.newComplexList.mapRows(mappedFunction=mappedFunction,inPlace=True)
         if exportFile is not None: self.export(exportFile)
-    def export(self,filename): 
+    def export(self,filename):
+        nonetoString = lambda cells: [str(cell or '') for cell in cells]
+        print(f'Writing to... {filename}')
         with open(filename,'w',newline='') as csv_file:
             my_writer = writer(csv_file, delimiter = ',')
-            self.new_complexList.Data.insert(0,self.new_complexList.Columns)
-            for row in self.new_complexList.Data:
-                my_writer.writerow(row)
+            self.newComplexList.Data.insert(0,self.newComplexList.Columns)
+            for row in self.newComplexList.Data:
+                my_writer.writerow(nonetoString(row))
