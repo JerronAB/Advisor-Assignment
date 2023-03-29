@@ -31,6 +31,14 @@ for item in importableCSVs: #can't seem to use this w/ lambda and map
     csvObj = advising.CSVObject(item)
     advisorSQLDB.addRows(csvObj.name,csvObj.Data,csvObj.Columns)
 
+adv_counts = advisorSQLDB.export('advisor_assignment_count', where_statement='WHERE STDNT_ENRL_STATUS=Enrolled') #this stanza shows us our issues with complexList right now
+advisor_counts = advising.complexList()
+advisor_counts.Columns = adv_counts.pop(0)
+advisor_counts.addData(adv_counts)
+for item in advisor_counts.Data:
+    advisorAPI.setAdvisorCount(item[0],int(item[1]))
+
+
 advisorSQLDB.arbitraryExecute('''CREATE TABLE all_assignments AS SELECT current_term.EMPLID, current_term.STUDENT_NAME, current_term.ADVISOR_ID, current_term.ADVISOR_NAME, current_term.DESCR2, current_term.SUBPLAN_DESCR, sgrp_with_date.STDGR_STDNT_GROUP, sgrp_with_date.STDGR_STDNT_GROUP_LDESC, current_term.STDNT_ENRL_STATUS, current_term_enrollment.ENRL_ADD_DT, sgrp_with_date.EFFDT, SI_Probation.SRVC_IND_CD, SI_Probation.SRVC_IND_REFRNCE, current_term.K_HOME_CAMPUS, previous_term.REQ_TERM, current_term.ACTION_DT, current_term.PROG_ACTION, current_term.STDNT_CAR_NBR
 FROM (((((current_term LEFT JOIN previous_term ON current_term.EMPLID = previous_term.EMPLID) LEFT JOIN sgrp_with_date ON current_term.EMPLID = sgrp_with_date.EMPLID) LEFT JOIN SI_Probation ON current_term.EMPLID = SI_Probation.EMPLID) LEFT JOIN personal_email ON current_term.EMPLID = personal_email.EMPLID) LEFT JOIN current_term_enrollment ON current_term.EMPLID = current_term_enrollment.EMPLID) LEFT JOIN current_term_owtctr ON current_term.EMPLID = current_term_OWTCTR.EMPLID ORDER BY current_term_enrollment.ENRL_ADD_DT DESC;''')
 
@@ -39,18 +47,16 @@ exemptions = advising.CSVObject(envDict['exemptions'])
 all_assignments = advisorSQLDB.export('all_assignments',where_statement="ORDER BY EMPLID") #list of list of items from table
 untouched_advisors = envDict['UNTOUCHABLE_ADVISORS'].split(';')
 all_assignments_filtered = [row for row in all_assignments if row[8] == 'E' and row[3] not in untouched_advisors]# and row[0] not in exemptions.csvData[0]]
-advisor_counts = advisorSQLDB.export('advisor_assignment_count', where_statement='WHERE STDNT_ENRL_STATUS=Enrolled')
 
-global_row_temp = '' #I'll need to have advisorCounting done using complexList, most likely. That'll be best. 
+#this can be much more efficient, but for right now I don't care. 
 for row in all_assignments_filtered: 
-    findCells = lambda line: (line[2],line[3],[line[4],line[5],line[6]]) 
+    findCells = lambda line: (line[3],[line[4],line[5],line[6]]) 
     advisorCell,programCells = findCells(row) #uses lambda to grab relevant cells
+    suggestCell = advisorAPI.testProgramAdvisor(advisorCell,programCells)
     for items in exemptions.Data: #in the future, this should be done with the complexList object, or a method thereof
-        if items[0] in row[0]: row.insert(0,f'Exception with: {items[3]} Reason: {items[4]}')
-    global_row_temp = row[0]
-    row.insert(0,advisorAPI.testProgramAdvisor(advisorCell,programCells))
-
-mappedAdvisorCounting = lambda row: advisorAPI.incrementAdvisor(row[4])
+        if items[0] in row[0]: suggestCell= f'Exception with: {items[3]} Reason: {items[4]}'
+        break
+    row.insert(0,suggestCell)
 
 header_list = all_assignments.pop(0)
 advising.CSVObject(csvData=all_assignments,csvColumns=header_list).export(f'{envDict["unfiltered_file"]}')
