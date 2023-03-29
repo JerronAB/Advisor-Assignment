@@ -1,10 +1,13 @@
 import advising
 
-envDict = {}
-with open('.env') as envFile:
-    for line in envFile:
-        if line[0] != "#": key, value = line.strip().split('=')
-        envDict[key.strip()] = value.strip()
+try:
+    envDict = {}
+    with open('.env') as envFile:
+        for line in envFile:
+            if line[0] != "#": key, value = line.strip().split('=')
+            envDict[key.strip()] = value.strip()
+except:
+    print('.env file was not found, but is required for this script. Is your Python session running in the correct directory?\n')
 
 [print(f'{key}: {envDict[key]}') for key in envDict]
 
@@ -40,9 +43,10 @@ advisor_counts = advisorSQLDB.export('advisor_assignment_count', where_statement
 
 global_row_temp = '' #I'll need to have advisorCounting done using complexList, most likely. That'll be best. 
 for row in all_assignments_filtered: 
-    findCells = lambda line: (line[3],[line[4],line[5],line[6]])
-    advisorCell,programCells = findCells(row) #extract the cells above
-    if row[0] in exemptions.Data[0]: row.insert(0,f'Exception with: {exemptions.Data[3]} Reason: {exemptions.Data[4]}')
+    findCells = lambda line: (line[2],line[3],[line[4],line[5],line[6]]) 
+    advisorCell,programCells = findCells(row) #uses lambda to grab relevant cells
+    for items in exemptions.Data: #in the future, this should be done with the complexList object, or a method thereof
+        if items[0] in row[0]: row.insert(0,f'Exception with: {items[3]} Reason: {items[4]}')
     global_row_temp = row[0]
     row.insert(0,advisorAPI.testProgramAdvisor(advisorCell,programCells))
 
