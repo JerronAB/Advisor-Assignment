@@ -43,19 +43,18 @@ advisorSQLDB.arbitraryExecute('''CREATE TABLE all_assignments AS SELECT current_
 FROM (((((current_term LEFT JOIN previous_term ON current_term.EMPLID = previous_term.EMPLID) LEFT JOIN sgrp_with_date ON current_term.EMPLID = sgrp_with_date.EMPLID) LEFT JOIN SI_Probation ON current_term.EMPLID = SI_Probation.EMPLID) LEFT JOIN personal_email ON current_term.EMPLID = personal_email.EMPLID) LEFT JOIN current_term_enrollment ON current_term.EMPLID = current_term_enrollment.EMPLID) LEFT JOIN current_term_owtctr ON current_term.EMPLID = current_term_OWTCTR.EMPLID ORDER BY current_term_enrollment.ENRL_ADD_DT DESC;''')
 
 exemptions = advising.CSVObject(envDict['exemptions'])
+exempt_dict = {int(row[0]): row for row in exemptions.Data}
 
 all_assignments = advisorSQLDB.export('all_assignments',where_statement="ORDER BY EMPLID") #list of list of items from table
 untouched_advisors = envDict['UNTOUCHABLE_ADVISORS'].split(';')
-all_assignments_filtered = [row for row in all_assignments if row[8] == 'E' and row[3] not in untouched_advisors]# and row[0] not in exemptions.csvData[0]]
+all_assignments_filtered = [row for row in all_assignments if row[8] == 'E' and row[3] not in untouched_advisors]
 
 #this can be much more efficient, but for right now I don't care. 
 for row in all_assignments_filtered: #eventually use mapRows for this
     findCells = lambda line: (line[3],[line[4],line[5],line[6]]) 
     advisorCell,programCells = findCells(row) #uses lambda to grab relevant cells
     suggestCell = advisorAPI.testProgramAdvisor(advisorCell,programCells)
-    for items in exemptions.Data: #in the future, this should be done with the complexList object, or a method thereof
-        if items[0] in row[0]: suggestCell= f'Exception with: {items[3]} Reason: {items[4]}'
-        break
+    if int(row[0]) in exempt_dict.keys(): suggestCell=f'Exemption with: {exempt_dict[int(row[0])][3]} Reason: {exempt_dict[int(row[0])][4]}'
     row.insert(0,suggestCell)
 
 header_list = all_assignments.pop(0)

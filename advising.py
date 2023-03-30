@@ -134,7 +134,6 @@ class complexList:
     def deDup(self, dedupColumn): #make this nicer and cleaner
         index = self.Columns.index(dedupColumn)
         dedupping_set = set()
-        print(f'Index for sort (should be 1): {index}')
         deduplicated = [item for item in self.Data if item[index] not in dedupping_set and not dedupping_set.add(item[index])] #set() does not allow duplicate values. Here we add all items to a set on each loop, and stop loop if item is in set already
         self.Data = deduplicated
         return self.Data
