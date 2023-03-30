@@ -131,11 +131,14 @@ class complexList:
         else: return [mappedFunction(row) for row in self.Data if row is not None]
     def integrityCheck(self):
         if not all(type(line) is list for line in self.Data): raise TypeError("complexList data must be a list of lists.")
-    def deDup(self, dedupColumn,sortFunc=None):
-        if sortFunc is None: 
-            pass
-        else:
-            pass
+    def deDup(self, dedupColumn): #make this nicer and cleaner
+        index = self.Columns.index(dedupColumn)
+        dedupping_set = set()
+        print(f'Index for sort (should be 1): {index}')
+        deduplicated = [item for item in self.Data if item[index] not in dedupping_set and not dedupping_set.add(item[index])] #set() does not allow duplicate values. Here we add all items to a set on each loop, and stop loop if item is in set already
+        self.Data = deduplicated
+        return self.Data
+
 
 from csv import reader,writer
 class CSVObject: #creates and interacts with complexList object
