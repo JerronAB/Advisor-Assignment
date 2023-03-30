@@ -8,6 +8,7 @@ try:
             envDict[key.strip()] = value.strip()
 except:
     print('.env file was not found, but is required for this script. Is your Python session running in the correct directory?\n')
+    exit()
 
 [print(f'{key}: {envDict[key]}') for key in envDict]
 
@@ -54,7 +55,10 @@ for row in all_assignments_filtered: #eventually use mapRows for this
     findCells = lambda line: (line[3],[line[4],line[5],line[6]]) 
     advisorCell,programCells = findCells(row) #uses lambda to grab relevant cells
     suggestCell = advisorAPI.testProgramAdvisor(advisorCell,programCells)
-    if int(row[0]) in exempt_dict.keys(): suggestCell=f'Exemption with: {exempt_dict[int(row[0])][3]} Reason: {exempt_dict[int(row[0])][4]}'
+    try: 
+        suggestCell=f'Exemption with: {exempt_dict[int(row[0])][3]} Reason: {exempt_dict[int(row[0])][4]}' 
+    except: 
+        pass
     row.insert(0,suggestCell)
 
 header_list = all_assignments.pop(0)
