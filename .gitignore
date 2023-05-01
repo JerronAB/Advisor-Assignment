@@ -3,6 +3,17 @@
 
 #Other files
 De-Duplicating.txt
-*.csv
 scheduled_check.ps1
 __pycache__/*
+
+AdvExemptions.csv
+AdvIDList.csv
+Advisor Assignment Count.csv
+AdvisorList.csv
+Current Term Enrollment.csv
+Current Term OWTCTR.csv
+Current Term.csv
+Personal Email.csv
+Previous Term.csv
+SGRP with date.csv
+SI_Probation.csv

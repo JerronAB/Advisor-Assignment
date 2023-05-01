@@ -1,0 +1,61 @@
+program,advisor name,plan,subplan,stdgrp,stdgrp desc
+Air Conditioning Technology,,,,,
+999999999,"Smith, John",Air Conditioning Technology,,,
+,,Domestic Air Cond & Furnace,,,
+,,Gen Occupational Tech Studies,,,
+,,Heat Ventilation Air Cond Mech,,,
+,,Refrigeration Mechanic,,,
+,,Air Conditioning Technology,Air Conditioning Tech Track,,
+,,Air Conditioning Technology,Commercial Sys & Cont Tech Tra,,
+,,,,,
+Automotive Technology,,,,,
+111111111,"Doe, Jane",Automotive Technician,,,
+,,Automotive Technology,Auto Tech:  Auto Technician,,
+,,Medium & Heavy Truck Tech,,,
+,,Automotive Electrician,,,
+,,,,,
+Business Advisors,,,,,
+222222222,"Jane, Plain",Accounting,,,
+333333333,"Smith, John",Associate in Arts,,PBA,Business Administration
+4444444,"Otto, Ron",Associate in Arts,,PBUS,Business
+9898987,"Another, Name",Associate in Arts,,PACC,Accounting
+,,Associate in Arts,,PMGT,Management
+,,Associate in Science,,PMGT,Management
+,,Associate in Science,,PBUS,Business
+,,Associate in Science,,PBA,Business Administration
+,,Associate in Science,,PACC,Accounting
+,,Business Administration,BusAdm Management Option,,
+,,Business Administration,BusAdm Business Management,,
+,,Business Administration,BusAdm Accounting Track,,
+,,Business Administration,BusAdm Marketing and Retailing,,
+,,Business Administration,BusAdm Business Management,PBUS,Business
+,,Business Communication,,,
+,,General Business,,,
+,,Management,,,
+,,Organizational Leadership,,,
+,,Business Administration,BusAdm Management Track,,
+,,Supervisory Management,,,
+,,Business Administration,BusAdm Management Track,PBA,Business Administration
+,,Entrepreneurship,,,
+,,Financial & Customer Services,,,
+,,Small Business Management,,,
+,,Business Administration,BusAdm Management Track,PBUS,Business
+,,Supply Chain Management,,,
+,,,,,
+Computer Information Techologies Advisors,,,,,
+1234567,"Program, AdvisorName",Associate in Science,,PIT,Computer & Information Technol
+2345678,"Lastname, Firstname",Computer and Information Tech,Business Software and Support,,
+,,Computer and Information Tech,Network Administration,,
+,,Computer and Information Tech,Programming,,
+,,Computer and Information Tech,General Track,,
+,,Computer and Information Tech,Information Security,,
+,,Computer and Information Tech,Internet Technologies,,
+,,Computer and Information Tech,Network Technologies,,
+,,Computer Maintenance Tech,,,
+,,Computer Technician,,,
+,,Programmer,,,
+,,Computer Tech Basic,,,
+,,Information Security Specialst,,,
+,,Cisco Networking Enhanced,,,
+,,Computer Forensics,,,
+,,Digital Forensics Specialist,,,
