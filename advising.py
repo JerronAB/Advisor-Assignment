@@ -106,11 +106,15 @@ class SQLAPI: #COMMAND validation
         [self.addRow(table_name,row) for row in rows] #gotta be a more efficient way to do this; map maybe?
     def arbitraryExecute(self, command):
         self.instance.cursor.execute(command)
-    def export(self, table_name, select_statement='*',where_statement=''): #this is currently limited to just exporting a table
+    def export(self, table_name, select_statement='*',where_statement='',complexlist=True):
         table_name = self.instance.nameFormat(table_name)
         header_list = [header[1] for header in self.instance.cursor.execute(f'PRAGMA table_info ({table_name})')]
         data_to_export = [list(item) for item in self.instance.cursor.execute(f'SELECT {select_statement} FROM {table_name} {where_statement}')] #I think I'm performing unnecessary operations here; can be paired down to a simple list comp
         data_to_export.insert(0,header_list)
+        self.cl_export = complexList()
+        self.cl_export.Columns = data_to_export[0]
+        self.cl_export.addData(data_to_export[1:])
+        if complexlist: return self.cl_export
         return data_to_export
 
 class complexList:
@@ -171,3 +175,5 @@ class CSVObject: #creates and interacts with complexList object
             self.newComplexList.Data.insert(0,self.newComplexList.Columns)
             for row in self.newComplexList.Data:
                 my_writer.writerow(nonetoString(row))
+    def deDup(self,column_to_dedup):
+        self.newComplexList.deDup(dedupColumn=column_to_dedup)
