@@ -140,14 +140,12 @@ class complexData:
         dedupping_set = set()
         return [item for item in self.Data if item[index] not in dedupping_set and not dedupping_set.add(item[index])] #set() does not allow duplicate values. Here we add all items to a set on each loop, and stop loop if item is in set already
 
-
 class SQLAPISubclass(complexData):
-    def __init__(self) -> None:
-        complexData.__init__(self)
     def __init__(self, db_filename=':memory:') -> None:
+        complexData.__init__(self)
         self.instance = SQLInstance(db_filename)
         self.dbname = db_filename
-        self.tables = []
+        self.tables = []        
     def addTable(self, table_name, headers_list):
         self.tables.append(table_name)
         self.instance.addTable(table_name,headers_list)
@@ -166,12 +164,11 @@ class SQLAPISubclass(complexData):
         header_list = [header[1] for header in self.instance.cursor.execute(f'PRAGMA table_info ({table_name})')]
         data_to_export = [list(item) for item in self.instance.cursor.execute(f'SELECT {select_statement} FROM {table_name} {where_statement}')] #I think I'm performing unnecessary operations here; can be paired down to a simple list comp
         data_to_export.insert(0,header_list)
-        self.cl_export = complexList()
+        self.cl_export = complexData()
         self.cl_export.Columns = data_to_export[0]
         self.cl_export.addData(data_to_export[1:])
         if complexlist: return self.cl_export
         return data_to_export
-
 
 from csv import reader,writer
 class CSVObject: #creates and interacts with complexData object
