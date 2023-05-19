@@ -46,7 +46,7 @@ all_assignments = advisorSQLDB.export('all_assignments',where_statement="ORDER B
 untouched_advisors = envDict['UNTOUCHABLE_ADVISORS'].split(';')
 all_assignments_filtered = [row for row in all_assignments if row[8] == 'E' and row[3] not in untouched_advisors]
 
-#this can be much more efficient, but for right now I don't care. 
+#turn this into a function
 for row in all_assignments_filtered: #eventually use mapRows for this
     findCells = lambda line: (line[3],[line[4],line[5],line[6]]) 
     advisorCell,programCells = findCells(row) #uses lambda to grab relevant cells

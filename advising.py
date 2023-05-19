@@ -1,6 +1,6 @@
+#Goals:
 #Use map more often than list generators
-#CSV Data exports directly--line by line--into SQL, so a middle-man isn't necessarily advantageous. 
-#Where should my exception management occur? Where should my deduping occur?
+#use composition from builtin python classes
 
 class AdvisableSet: #functionality: store and maintain advisors and their programs; determine correct advisor/program
     def __init__(self, name=None) -> None:
@@ -111,13 +111,13 @@ class SQLAPI: #COMMAND validation
         header_list = [header[1] for header in self.instance.cursor.execute(f'PRAGMA table_info ({table_name})')]
         data_to_export = [list(item) for item in self.instance.cursor.execute(f'SELECT {select_statement} FROM {table_name} {where_statement}')] #I think I'm performing unnecessary operations here; can be paired down to a simple list comp
         data_to_export.insert(0,header_list)
-        self.cl_export = complexList()
+        self.cl_export = complexData()
         self.cl_export.Columns = data_to_export[0]
         self.cl_export.addData(data_to_export[1:])
         if complexlist: return self.cl_export
         return data_to_export
 
-class complexList:
+class complexData:
     def __init__(self) -> None:
         self.Data = []
         self.Columns = []
@@ -134,46 +134,43 @@ class complexList:
         if inPlace is True: self.Data = [mappedFunction(row) for row in self.Data if row is not None]
         else: return [mappedFunction(row) for row in self.Data if row is not None]
     def integrityCheck(self):
-        if not all(type(line) is list for line in self.Data): raise TypeError("complexList data must be a list of lists.")
+        if not all(type(line) is list for line in self.Data): raise TypeError("complexData data must be a list of lists.")
     def deDup(self, dedupColumn): #make this nicer and cleaner
         index = self.Columns.index(dedupColumn)
         dedupping_set = set()
-        deduplicated = [item for item in self.Data if item[index] not in dedupping_set and not dedupping_set.add(item[index])] #set() does not allow duplicate values. Here we add all items to a set on each loop, and stop loop if item is in set already
-        self.Data = deduplicated
-        return self.Data
-
+        return [item for item in self.Data if item[index] not in dedupping_set and not dedupping_set.add(item[index])] #set() does not allow duplicate values. Here we add all items to a set on each loop, and stop loop if item is in set already
 
 from csv import reader,writer
-class CSVObject: #creates and interacts with complexList object
+class CSVObject: #creates and interacts with complexData object
     def __init__(self, filename=None,csvData=None,csvColumns=None) -> None:
-        self.newComplexList = complexList()
+        self.complexData = complexData()
         if filename is not None: self.fileIntake(filename)
         else:
-            self.newComplexList.Columns=(csvColumns)
-            self.newComplexList.addData(csvData)
-        self.Data = self.newComplexList.Data
-        self.Columns = self.newComplexList.Columns
+            self.complexData.Columns=(csvColumns)
+            self.complexData.addData(csvData)
+        self.Data = self.complexData.Data
+        self.Columns = self.complexData.Columns
     def fileIntake(self, filename):
         with open(filename, 'r', encoding='ISO-8859-1') as csvfile: #UTF-8
                 self.filename = filename
                 newname = filename.split('\\')
                 self.name = newname[-1].replace('.csv','')
                 csvData = [row for row in reader(csvfile)]
-                self.newComplexList.Columns = list(map(lambda input_str: input_str.replace("ï»¿",""), csvData.pop(0)))
-                self.newComplexList.addData(csvData)
+                self.complexData.Columns = list(map(lambda input_str: input_str.replace("ï»¿",""), csvData.pop(0)))
+                self.complexData.addData(csvData)
     def mapRows(self, mappedFunction, changeInPlace=False):
-        if changeInPlace is True: self.newComplexList.mapRows(mappedFunction,inPlace=changeInPlace)
-        else: return self.newComplexList.mapRows(mappedFunction,inPlace=changeInPlace)
+        if changeInPlace is True: self.complexData.mapRows(mappedFunction,inPlace=changeInPlace)
+        else: return self.complexData.mapRows(mappedFunction,inPlace=changeInPlace)
     def mappedExport(self, mappedFunction,exportFile=None):
-        self.newComplexList.mapRows(mappedFunction=mappedFunction,inPlace=True)
+        self.complexData.mapRows(mappedFunction=mappedFunction,inPlace=True)
         if exportFile is not None: self.export(exportFile)
-    def export(self,filename):
+    def export(self,filename): #looking at export function to make sure it doesn't export empty cells
         nonetoString = lambda cells: [str(cell or '') for cell in cells]
         print(f'Writing to... {filename}')
         with open(filename,'w',newline='') as csv_file:
             my_writer = writer(csv_file, delimiter = ',')
-            self.newComplexList.Data.insert(0,self.newComplexList.Columns)
-            for row in self.newComplexList.Data:
+            self.complexData.Data.insert(0,self.complexData.Columns)
+            for row in self.complexData.Data:
                 my_writer.writerow(nonetoString(row))
     def deDup(self,column_to_dedup):
-        self.newComplexList.deDup(dedupColumn=column_to_dedup)
+        self.complexData.deDup(dedupColumn=column_to_dedup)
