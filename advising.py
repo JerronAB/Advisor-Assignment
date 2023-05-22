@@ -88,8 +88,45 @@ class SQLInstance: #this will be less monstrous if we abstract it, too; use for 
     def execCommand(self, command):
         self.cursor.execute(command)
 
-class SQLAPI: #COMMAND validation
+class tableData:
+    def __init__(self) -> None:
+        self.Data = set()
+        self.Columns = []
+    def setData(self, data):
+        self.Data.append(item for item in data)
+        self.integrityCheck()
+    def addRow(self, line):
+        self.Data.append(line)
+    def mapRows(self, mappedFunction, inPlace=False):
+        print(f'Function being passed: {mappedFunction}')
+        print(f'Modifying in-place: {inPlace}')
+        if inPlace is True: self.Data = [mappedFunction(row) for row in self.Data if row is not None]
+        else: return [mappedFunction(row) for row in self.Data if row is not None]
+    def integrityCheck(self):
+        if not all(type(line) is list for line in self.Data): raise TypeError("tableData data must be a list of lists.")
+    def deDup(self, dedupColumn): #make this nicer and cleaner
+        index = self.Columns.index(dedupColumn)
+        dedupping_set = set()
+        return [item for item in self.Data if item[index] not in dedupping_set and not dedupping_set.add(item[index])] #set() does not allow duplicate values. Here we add all items to a set on each loop, and stop loop if item is in set already
+    def export(self,filename): #looking at export function to make sure it doesn't export empty cells
+        #this uses the 'writer' function from the csv module
+        nonetoString = lambda cells: [str(cell or '') for cell in cells]
+        print(f'Writing to... {filename}')
+        with open(filename,'w',newline='') as csv_file:
+            my_writer = writer(csv_file, delimiter = ',')
+            my_writer.writerow(nonetoString(self.Columns))
+            for row in self.Data:
+                my_writer.writerow(nonetoString(row))
+    def migrateData(self):
+        baseData = tableData()
+        baseData.Data = self.Data
+        baseData.Columns = self.Columns
+        return baseData
+
+#QUICK TO DO LIST: make sure this class can maintain rows properly then perform dataSync; remember to use tableData's methods since it's the superclass
+class SQLTableSubclass(tableData):
     def __init__(self, db_filename=':memory:') -> None:
+        tableData.__init__(self)
         self.instance = SQLInstance(db_filename)
         self.dbname = db_filename
         self.tables = []
@@ -106,101 +143,41 @@ class SQLAPI: #COMMAND validation
         [self.addRow(table_name,row) for row in rows] #gotta be a more efficient way to do this; map maybe?
     def arbitraryExecute(self, command):
         self.instance.cursor.execute(command)
-    def export(self, table_name, select_statement='*',where_statement='',complexlist=True):
-        table_name = self.instance.nameFormat(table_name)
-        header_list = [header[1] for header in self.instance.cursor.execute(f'PRAGMA table_info ({table_name})')]
-        data_to_export = [list(item) for item in self.instance.cursor.execute(f'SELECT {select_statement} FROM {table_name} {where_statement}')] #I think I'm performing unnecessary operations here; can be paired down to a simple list comp
-        data_to_export.insert(0,header_list)
-        self.cl_export = complexData()
-        self.cl_export.Columns = data_to_export[0]
-        self.cl_export.addData(data_to_export[1:])
-        if complexlist: return self.cl_export
-        return data_to_export
+    def dataSync(self):
+        ...
 
-class complexData:
-    def __init__(self) -> None:
-        self.Data = []
-        self.Columns = []
-    def addData(self, data):
-        try:
-            self.Data = [item for item in data]
-            self.integrityCheck()
-        except:
-            self.Data = data
-            self.integrityCheck()
-    def mapRows(self, mappedFunction, inPlace=False):
-        print(f'Function being passed: {mappedFunction}')
-        print(f'Modifying in-place: {inPlace}')
-        if inPlace is True: self.Data = [mappedFunction(row) for row in self.Data if row is not None]
-        else: return [mappedFunction(row) for row in self.Data if row is not None]
-    def integrityCheck(self):
-        if not all(type(line) is list for line in self.Data): raise TypeError("complexData data must be a list of lists.")
-    def deDup(self, dedupColumn): #make this nicer and cleaner
-        index = self.Columns.index(dedupColumn)
-        dedupping_set = set()
-        return [item for item in self.Data if item[index] not in dedupping_set and not dedupping_set.add(item[index])] #set() does not allow duplicate values. Here we add all items to a set on each loop, and stop loop if item is in set already
-
-class SQLAPISubclass(complexData):
-    def __init__(self, db_filename=':memory:') -> None:
-        complexData.__init__(self)
-        self.instance = SQLInstance(db_filename)
-        self.dbname = db_filename
-        self.tables = []        
-    def addTable(self, table_name, headers_list):
-        self.tables.append(table_name)
-        self.instance.addTable(table_name,headers_list)
-    def addRow(self, table_name, import_row):
-        if not type(import_row) is list: raise TypeError('import_row Must be list.')
-        self.instance.addRow(table_name,import_row)
-    def addRows(self, table_name, rows, headers_list=[]):
-        if not all(type(item) is list for item in rows): raise TypeError('rows must be a list of lists. ')
-        if not type(headers_list) is list: raise TypeError('headers_list Must be a list. ')
-        if table_name not in self.tables: self.addTable(table_name,headers_list)
-        [self.addRow(table_name,row) for row in rows] #gotta be a more efficient way to do this; map maybe?
-    def arbitraryExecute(self, command):
-        self.instance.cursor.execute(command)
-    def export(self, table_name, select_statement='*',where_statement='',complexlist=True):
-        table_name = self.instance.nameFormat(table_name)
-        header_list = [header[1] for header in self.instance.cursor.execute(f'PRAGMA table_info ({table_name})')]
-        data_to_export = [list(item) for item in self.instance.cursor.execute(f'SELECT {select_statement} FROM {table_name} {where_statement}')] #I think I'm performing unnecessary operations here; can be paired down to a simple list comp
-        data_to_export.insert(0,header_list)
-        self.cl_export = complexData()
-        self.cl_export.Columns = data_to_export[0]
-        self.cl_export.addData(data_to_export[1:])
-        if complexlist: return self.cl_export
-        return data_to_export
 
 from csv import reader,writer
-class CSVObject: #creates and interacts with complexData object
+class CSVObject: #creates and interacts with tableData object
     def __init__(self, filename=None,csvData=None,csvColumns=None) -> None:
-        self.complexData = complexData()
+        self.tableData = tableData()
         if filename is not None: self.fileIntake(filename)
         else:
-            self.complexData.Columns=(csvColumns)
-            self.complexData.addData(csvData)
-        self.Data = self.complexData.Data
-        self.Columns = self.complexData.Columns
+            self.tableData.Columns=(csvColumns)
+            self.tableData.setData(csvData)
+        self.Data = self.tableData.Data
+        self.Columns = self.tableData.Columns
     def fileIntake(self, filename):
         with open(filename, 'r', encoding='ISO-8859-1') as csvfile: #UTF-8
                 self.filename = filename
                 newname = filename.split('\\')
                 self.name = newname[-1].replace('.csv','')
                 csvData = [row for row in reader(csvfile)]
-                self.complexData.Columns = list(map(lambda input_str: input_str.replace("ï»¿",""), csvData.pop(0)))
-                self.complexData.addData(csvData)
+                self.tableData.Columns = list(map(lambda input_str: input_str.replace("ï»¿",""), csvData.pop(0)))
+                self.tableData.setData(csvData)
     def mapRows(self, mappedFunction, changeInPlace=False):
-        if changeInPlace is True: self.complexData.mapRows(mappedFunction,inPlace=changeInPlace)
-        else: return self.complexData.mapRows(mappedFunction,inPlace=changeInPlace)
+        if changeInPlace is True: self.tableData.mapRows(mappedFunction,inPlace=changeInPlace)
+        else: return self.tableData.mapRows(mappedFunction,inPlace=changeInPlace)
     def mappedExport(self, mappedFunction,exportFile=None):
-        self.complexData.mapRows(mappedFunction=mappedFunction,inPlace=True)
+        self.tableData.mapRows(mappedFunction=mappedFunction,inPlace=True)
         if exportFile is not None: self.export(exportFile)
     def export(self,filename): #looking at export function to make sure it doesn't export empty cells
         nonetoString = lambda cells: [str(cell or '') for cell in cells]
         print(f'Writing to... {filename}')
         with open(filename,'w',newline='') as csv_file:
             my_writer = writer(csv_file, delimiter = ',')
-            self.complexData.Data.insert(0,self.complexData.Columns)
-            for row in self.complexData.Data:
+            self.tableData.Data.insert(0,self.tableData.Columns)
+            for row in self.tableData.Data:
                 my_writer.writerow(nonetoString(row))
     def deDup(self,column_to_dedup):
-        self.complexData.deDup(dedupColumn=column_to_dedup)
+        self.tableData.deDup(dedupColumn=column_to_dedup)
