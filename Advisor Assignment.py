@@ -25,12 +25,14 @@ def advisorDecision(row):
 AdvisorList = advising.CSVObject(envDict['advisor_list'])
 AdvisorList.mapRows(advisorDecision)
 
-advisorSQLDB = advising.SQLAPI()
+advisorSQLDB = advising.SQLTableSubclass()
 
 importableCSVs = envDict['import_csvs'].split(',')
 for item in importableCSVs: #can't seem to use this w/ lambda and map
     csvObj = advising.CSVObject(item)
-    advisorSQLDB.addRows(csvObj.name,csvObj.Data,csvObj.Columns)
+    SQLConnection = advising.SQLTableSubclass()
+    #SQLConnection.addTable() <-- might not be necessary if addRows can add table
+    SQLConnection.addRows(csvObj.name,csvObj.Data,csvObj.Columns)
 
 adv_counts = advisorSQLDB.export('advisor_assignment_count', where_statement='WHERE STDNT_ENRL_STATUS = \'Enrolled\'') #this stanza shows us our issues with complexList right now
 for item in adv_counts.Data:

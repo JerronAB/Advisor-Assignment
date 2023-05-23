@@ -90,20 +90,22 @@ class SQLInstance: #this will be less monstrous if we abstract it, too; use for 
 
 class tableData:
     def __init__(self) -> None:
-        self.Data = set()
+        self.Data = tuple()
         self.Columns = []
     def setData(self, data):
-        self.Data.append(item for item in data)
+        generator_object = (item for item in data) #apparently the generator object itself must be iterated through
+        for line in generator_object: self.addRow(line) #calling this function over and over again may result in slowdown; there's essentially 2 loops here
         self.integrityCheck()
     def addRow(self, line):
-        self.Data.append(line)
+        self.Data += (line,)
     def mapRows(self, mappedFunction, inPlace=False):
         print(f'Function being passed: {mappedFunction}')
         print(f'Modifying in-place: {inPlace}')
         if inPlace is True: self.Data = [mappedFunction(row) for row in self.Data if row is not None]
         else: return [mappedFunction(row) for row in self.Data if row is not None]
     def integrityCheck(self):
-        if not all(type(line) is list for line in self.Data): raise TypeError("tableData data must be a list of lists.")
+        print(self.Data)
+        if not all(type(line) is list for line in self.Data): raise TypeError("tableData data must be a set of lists.")
     def deDup(self, dedupColumn): #make this nicer and cleaner
         index = self.Columns.index(dedupColumn)
         dedupping_set = set()
@@ -149,35 +151,20 @@ class SQLTableSubclass(tableData):
 
 from csv import reader,writer
 class CSVObject: #creates and interacts with tableData object
-    def __init__(self, filename=None,csvData=None,csvColumns=None) -> None:
-        self.tableData = tableData()
+    def __init__(self, filename=None) -> None:
+        tableData.__init__(self)
         if filename is not None: self.fileIntake(filename)
-        else:
-            self.tableData.Columns=(csvColumns)
-            self.tableData.setData(csvData)
-        self.Data = self.tableData.Data
-        self.Columns = self.tableData.Columns
     def fileIntake(self, filename):
         with open(filename, 'r', encoding='ISO-8859-1') as csvfile: #UTF-8
                 self.filename = filename
                 newname = filename.split('\\')
                 self.name = newname[-1].replace('.csv','')
                 csvData = [row for row in reader(csvfile)]
-                self.tableData.Columns = list(map(lambda input_str: input_str.replace("ï»¿",""), csvData.pop(0)))
-                self.tableData.setData(csvData)
+                self.Columns = list(map(lambda input_str: input_str.replace("ï»¿",""), csvData.pop(0)))
+                self.setData(csvData)
     def mapRows(self, mappedFunction, changeInPlace=False):
-        if changeInPlace is True: self.tableData.mapRows(mappedFunction,inPlace=changeInPlace)
-        else: return self.tableData.mapRows(mappedFunction,inPlace=changeInPlace)
+        if changeInPlace is True: self.anmapRows(mappedFunction,inPlace=changeInPlace)
+        else: return self.mapRows(mappedFunction,inPlace=changeInPlace)
     def mappedExport(self, mappedFunction,exportFile=None):
         self.tableData.mapRows(mappedFunction=mappedFunction,inPlace=True)
         if exportFile is not None: self.export(exportFile)
-    def export(self,filename): #looking at export function to make sure it doesn't export empty cells
-        nonetoString = lambda cells: [str(cell or '') for cell in cells]
-        print(f'Writing to... {filename}')
-        with open(filename,'w',newline='') as csv_file:
-            my_writer = writer(csv_file, delimiter = ',')
-            self.tableData.Data.insert(0,self.tableData.Columns)
-            for row in self.tableData.Data:
-                my_writer.writerow(nonetoString(row))
-    def deDup(self,column_to_dedup):
-        self.tableData.deDup(dedupColumn=column_to_dedup)
