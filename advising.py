@@ -98,7 +98,7 @@ class tableData:
         self.integrityCheck()
     def addRow(self, line):
         self.Data += (line,)
-    def mapRows(self, mappedFunction, inPlace=False):
+    def mapRows(self, mappedFunction, inPlace=False): #here, I need to explore using lambda & map, vs. using eval(), vs. using exec()
         print(f'Function being passed: {mappedFunction}')
         print(f'Modifying in-place: {inPlace}')
         if inPlace is True: self.Data = [mappedFunction(row) for row in self.Data if row is not None]
@@ -146,10 +146,13 @@ class SQLTableSubclass(tableData):
     def arbitraryExecute(self, command):
         self.instance.cursor.execute(command)
     def dataSync(self):
+        #what needs to go here: iterate through self.data to see what's already in the table? That's clunky but it works. 
+        #maybe ensure SQL tables cannot take duplicate values and just throw them all in there?
+        #add value to .data tuple to indicate when item has already been imported?
         ...
 
 
-from csv import reader,writer
+from csv import reader,writer #maybe this can just become a couple methods on the tableData class??
 class CSVObject: #creates and interacts with tableData object
     def __init__(self, filename=None) -> None:
         tableData.__init__(self)
@@ -162,9 +165,3 @@ class CSVObject: #creates and interacts with tableData object
                 csvData = [row for row in reader(csvfile)]
                 self.Columns = list(map(lambda input_str: input_str.replace("ï»¿",""), csvData.pop(0)))
                 self.setData(csvData)
-    def mapRows(self, mappedFunction, changeInPlace=False):
-        if changeInPlace is True: self.anmapRows(mappedFunction,inPlace=changeInPlace)
-        else: return self.mapRows(mappedFunction,inPlace=changeInPlace)
-    def mappedExport(self, mappedFunction,exportFile=None):
-        self.tableData.mapRows(mappedFunction=mappedFunction,inPlace=True)
-        if exportFile is not None: self.export(exportFile)
