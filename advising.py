@@ -93,8 +93,10 @@ class tableData:
         self.Data = tuple()
         self.Columns = []
     def setData(self, data):
+        print(f'setData running on iterable with {len(data)} items.')
         generator_object = (item for item in data) #apparently the generator object itself must be iterated through
-        for line in generator_object: self.Data += (line,) #calling this function over and over again may result in slowdown; there's essentially 2 loops here
+        print('generator_object created. Running tuple append')
+        for line in generator_object: self.Data += (line,) #calling this function over and over again may result in slowdown
         self.integrityCheck()
     def addRow(self, line):
         self.Data += (line,)
@@ -107,12 +109,15 @@ class tableData:
         if inPlace is True: self.Data = [mappedFunction(row) for row in self.Data if row is not None]
         else: return [mappedFunction(row) for row in self.Data if row is not None]
     def integrityCheck(self):
-        print(self.Data)
-        if not all(type(line) is list for line in self.Data): raise TypeError("tableData data must be a tuple of lists.")
+        print(f'Running integrity check---')
+        if not all(isinstance(line, list) and len(line) == len(self.Columns) for line in self.Data): raise TypeError("tableData data must be a tuple of lists with the same length as tableColumns")
+        print('Passed.')
     def deDup(self, dedupColumn): #make this nicer and cleaner
         index = self.Columns.index(dedupColumn)
         dedupping_set = set()
-        return [item for item in self.Data if item[index] not in dedupping_set and not dedupping_set.add(item[index])] #set() does not allow duplicate values. Here we add all items to a set on each loop, and stop loop if item is in set already
+        dedupped_list = [item for item in self.Data if item[index] not in dedupping_set and not dedupping_set.add(item[index])] #set() does not allow duplicate values. Here we add all items to a set on each loop, and stop loop if item is in set already
+        self.Data = ()
+        self.setData(dedupped_list)
     def export(self,filename): #looking at export function to make sure it doesn't export empty cells
         #this uses the 'writer' function from the csv module
         nonetoString = lambda cells: [str(cell or '') for cell in cells]
@@ -125,27 +130,33 @@ class tableData:
 
 #QUICK TO DO LIST: make sure this class can maintain rows properly then perform dataSync; remember to use tableData's methods since it's the superclass
 class SQLTableSubclass(tableData):
-    def __init__(self, db_tablename=None,db_filename=':memory:') -> None:
+    def __init__(self, db_tablename=None,db_filename='test.db') -> None:
         tableData.__init__(self)
         self.instance = SQLInstance(db_filename)
         self.dbname = db_filename
         self.table = db_tablename
         self.displaced_row = 0
-    def arbitraryExecute(self, command):
+    def execute(self, command):
         self.instance.cursor.execute(command)
     def dataPush(self):
-        #what needs to go here: iterate through self.data to see what's already in the table? That's clunky but it works. 
-        #maybe ensure SQL tables cannot take duplicate values and just throw them all in there?
-        #add value to .data tuple to indicate when item has already been imported?
-        #self.instance.addTable(table_name,headers_list)
-        for row in self.Data[self.displaced_row:]: 
+        print(f'Initiating dataPush to SQL... Table: {self.table}')
+        self.instance.addTable(self.table,self.Columns)
+        for row in self.Data[self.displaced_row:]:
             self.instance.addRow(self.table,row)
-            self.displaced_row += 1 #count number of loops and change this variable upon exit? trying to think of better ways here; leaving this for now
-    def dataPull(self):
-        pass
+            #self.displaced_row += 1 #count number of loops and change this variable upon exit? trying to think of better ways here; leaving this for now
+        self.instance.conn.commit()
+        self.instance.conn.close()
+    def dataPull(self,select_statement=None):
+        print(f'Initiating data pull... ')
+        if select_statement is None:
+            self.Columns = [header[1] for header in self.instance.cursor.execute(f'PRAGMA table_info ({self.table})')]
+            self.setData([list(item) for item in self.instance.cursor.execute(f'SELECT * FROM {self.table}')])
+        else:
+            self.Columns = [header[1] for header in self.instance.cursor.execute(f'PRAGMA table_info ({self.table})')]
+            self.setData([list(item) for item in self.instance.cursor.execute(select_statement)])
 
 from csv import reader,writer #maybe this can just become a couple methods on the tableData class??
-class CSVTableSubclass: #creates and interacts with tableData object
+class CSVTableSubclass(tableData): #creates and interacts with tableData object
     def __init__(self, filename=None) -> None:
         tableData.__init__(self)
         if filename is not None: self.fileIntake(filename)
@@ -159,9 +170,32 @@ class CSVTableSubclass: #creates and interacts with tableData object
                 self.setData(csvData)
 
 def migrateData(source,target_class):
-    if type(source) is SQLTableSubclass and target_class.lower() in ["csv","csvclass","csvobject"]:
-        ...
+    print(f'Type of source: {type(source)}')
+    if type(source) is SQLTableSubclass and target_class.lower() in ["csv","csvclass","csvobject"]: #we can probably reduce these to just 2 if-statements since we use the same underlying class
+        CSVTable = CSVTableSubclass()
+        CSVTable.Columns = source.Columns
+        CSVTable.Data = source.Data
+        return CSVTable
+    if type(source) is tableData and target_class.lower() in ["csv","csvclass","csvobject"]:
+        CSVTable = CSVTableSubclass()
+        CSVTable.Columns = source.Columns
+        CSVTable.Data = source.Data
+        return CSVTable
     if type(source) is CSVTableSubclass and target_class.lower() in ["sql","sqltablesubclass","sqlclass"]:
-        SQLTable = SQLTableSubclass()
+        fileName = source.filename.replace('\\',';').replace('/',';')
+        namesplit = fileName.split(';')
+        fileName = namesplit[-1]
+        print(f'Filename of CSV file: {fileName}')
+        SQLTable = SQLTableSubclass(db_tablename=fileName)
         SQLTable.Columns = source.Columns
-        SQLTable.setData(source.Data)
+        SQLTable.Data = source.Data
+        return SQLTable
+    if type(source) is tableData and target_class.lower() in ["sql","sqltablesubclass","sqlclass"]: #this will break because source won't have a filename attribute; don't need it for now tho
+        fileName = source.filename.replace('\\',';').replace('/',';')
+        namesplit = fileName.split(';')
+        fileName = namesplit[-1]
+        print(f'Filename of CSV file: {fileName}')
+        SQLTable = SQLTableSubclass(db_tablename=fileName)
+        SQLTable.Columns = source.Columns
+        SQLTable.Data = source.Data
+        return SQLTable
