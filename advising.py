@@ -70,7 +70,7 @@ class AdvisorAPI: #this "API" maintains a dictionary of AdvisableSet instances, 
 #SQLITE3 section
 import sqlite3 as sqlt
 class SQLInstance: #this will be less monstrous if we abstract it, too; use for error-checking and formatting? 
-    def __init__(self, db_filename=':memory:') -> None: #CONTENT validation
+    def __init__(self, db_filename='file::memory:?cache=shared", &db') -> None: #CONTENT validation
         self.conn = sqlt.connect(db_filename) #do we want more features here? Like more complex table renaming?
         self.cursor = self.conn.cursor()
         self.dbname = db_filename
@@ -130,7 +130,7 @@ class tableData:
 
 #QUICK TO DO LIST: make sure this class can maintain rows properly then perform dataSync; remember to use tableData's methods since it's the superclass
 class SQLTableSubclass(tableData):
-    def __init__(self, db_tablename=None,db_filename='test.db') -> None:
+    def __init__(self, db_tablename=None,db_filename="../temp.db") -> None:
         tableData.__init__(self)
         self.instance = SQLInstance(db_filename)
         self.dbname = db_filename

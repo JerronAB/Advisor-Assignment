@@ -26,6 +26,8 @@ print('Importing advisorList and associating advisors...')
 AdvisorList = advising.CSVTableSubclass(envDict['advisor_list'])
 AdvisorList.mapRows(advisorDecision)
 
+memory_db = advising.SQLTableSubclass()
+
 print('Importing CSV\'s...')
 importableCSVs = envDict['import_csvs'].split(',')
 for filename in importableCSVs: #can't seem to use this w/ lambda and map
@@ -82,4 +84,5 @@ filtered_export.setData(all_assignments_filtered)
 filtered_export.deDup('EMPLID')
 filtered_export.export(f'{envDict["filtered_file"]}')
 
+memory_db.instance.conn.close() #this must be done when the SQL table is in-memory, as it is now
 exit()
