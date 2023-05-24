@@ -94,10 +94,13 @@ class tableData:
         self.Columns = []
     def setData(self, data):
         generator_object = (item for item in data) #apparently the generator object itself must be iterated through
-        for line in generator_object: self.addRow(line) #calling this function over and over again may result in slowdown; there's essentially 2 loops here
+        for line in generator_object: self.Data += (line,) #calling this function over and over again may result in slowdown; there's essentially 2 loops here
         self.integrityCheck()
     def addRow(self, line):
         self.Data += (line,)
+    def addRows(self,rows):
+        for row in rows: self.addRow(row)
+        self.integrityCheck()
     def mapRows(self, mappedFunction, inPlace=False): #here, I need to explore using lambda & map, vs. using eval(), vs. using exec()
         print(f'Function being passed: {mappedFunction}')
         print(f'Modifying in-place: {inPlace}')
@@ -105,7 +108,7 @@ class tableData:
         else: return [mappedFunction(row) for row in self.Data if row is not None]
     def integrityCheck(self):
         print(self.Data)
-        if not all(type(line) is list for line in self.Data): raise TypeError("tableData data must be a set of lists.")
+        if not all(type(line) is list for line in self.Data): raise TypeError("tableData data must be a tuple of lists.")
     def deDup(self, dedupColumn): #make this nicer and cleaner
         index = self.Columns.index(dedupColumn)
         dedupping_set = set()
@@ -119,41 +122,30 @@ class tableData:
             my_writer.writerow(nonetoString(self.Columns))
             for row in self.Data:
                 my_writer.writerow(nonetoString(row))
-    def migrateData(self):
-        baseData = tableData()
-        baseData.Data = self.Data
-        baseData.Columns = self.Columns
-        return baseData
 
 #QUICK TO DO LIST: make sure this class can maintain rows properly then perform dataSync; remember to use tableData's methods since it's the superclass
 class SQLTableSubclass(tableData):
-    def __init__(self, db_filename=':memory:') -> None:
+    def __init__(self, db_tablename=None,db_filename=':memory:') -> None:
         tableData.__init__(self)
         self.instance = SQLInstance(db_filename)
         self.dbname = db_filename
-        self.tables = []
-    def addTable(self, table_name, headers_list):
-        self.tables.append(table_name)
-        self.instance.addTable(table_name,headers_list)
-    def addRow(self, table_name, import_row):
-        if not type(import_row) is list: raise TypeError('import_row Must be list.')
-        self.instance.addRow(table_name,import_row)
-    def addRows(self, table_name, rows, headers_list=[]):
-        if not all(type(item) is list for item in rows): raise TypeError('rows must be a list of lists. ')
-        if not type(headers_list) is list: raise TypeError('headers_list Must be a list. ')
-        if table_name not in self.tables: self.addTable(table_name,headers_list)
-        [self.addRow(table_name,row) for row in rows] #gotta be a more efficient way to do this; map maybe?
+        self.table = db_tablename
+        self.displaced_row = 0
     def arbitraryExecute(self, command):
         self.instance.cursor.execute(command)
-    def dataSync(self):
+    def dataPush(self):
         #what needs to go here: iterate through self.data to see what's already in the table? That's clunky but it works. 
         #maybe ensure SQL tables cannot take duplicate values and just throw them all in there?
         #add value to .data tuple to indicate when item has already been imported?
-        ...
-
+        #self.instance.addTable(table_name,headers_list)
+        for row in self.Data[self.displaced_row:]: 
+            self.instance.addRow(self.table,row)
+            self.displaced_row += 1 #count number of loops and change this variable upon exit? trying to think of better ways here; leaving this for now
+    def dataPull(self):
+        pass
 
 from csv import reader,writer #maybe this can just become a couple methods on the tableData class??
-class CSVObject: #creates and interacts with tableData object
+class CSVTableSubclass: #creates and interacts with tableData object
     def __init__(self, filename=None) -> None:
         tableData.__init__(self)
         if filename is not None: self.fileIntake(filename)
@@ -165,3 +157,11 @@ class CSVObject: #creates and interacts with tableData object
                 csvData = [row for row in reader(csvfile)]
                 self.Columns = list(map(lambda input_str: input_str.replace("ï»¿",""), csvData.pop(0)))
                 self.setData(csvData)
+
+def migrateData(source,target_class):
+    if type(source) is SQLTableSubclass and target_class.lower() in ["csv","csvclass","csvobject"]:
+        ...
+    if type(source) is CSVTableSubclass and target_class.lower() in ["sql","sqltablesubclass","sqlclass"]:
+        SQLTable = SQLTableSubclass()
+        SQLTable.Columns = source.Columns
+        SQLTable.setData(source.Data)
