@@ -94,9 +94,7 @@ class tableData:
         self.Columns = []
     def setData(self, data):
         print(f'setData running on iterable with {len(data)} items.')
-        generator_object = (item for item in data) #apparently the generator object itself must be iterated through
-        print('generator_object created. Running tuple append')
-        for line in generator_object: self.Data += (line,) #calling this function over and over again may result in slowdown
+        self.Data = tuple([item for item in data]) 
         self.integrityCheck()
     def addRow(self, line):
         self.Data += (line,)

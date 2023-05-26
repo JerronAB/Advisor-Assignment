@@ -26,8 +26,6 @@ print('Importing advisorList and associating advisors...')
 AdvisorList = advising.CSVTableSubclass(envDict['advisor_list'])
 AdvisorList.mapRows(advisorDecision)
 
-memory_db = advising.SQLTableSubclass()
-
 print('Importing CSV\'s...')
 importableCSVs = envDict['import_csvs'].split(',')
 for filename in importableCSVs: #can't seem to use this w/ lambda and map
@@ -47,7 +45,7 @@ FROM (((((current_term LEFT JOIN previous_term ON current_term.EMPLID = previous
 
 print('Grabbing and setting dictionary for exemptions...')
 exemptions = advising.CSVTableSubclass(envDict['exemptions'])
-exempt_dict = {int(row[0]): row for row in exemptions.Data}
+exempt_dict = {int(row[0]): row for row in exemptions.Data} #row[0] is the student ID
 
 print('Generating all_assignments as an ordered, unfiltered list.')
 #all_assignments = advisorSQLDB.export('all_assignments',where_statement="ORDER BY EMPLID",complexlist=False) #list of list of items from table
@@ -84,5 +82,4 @@ filtered_export.setData(all_assignments_filtered)
 filtered_export.deDup('EMPLID')
 filtered_export.export(f'{envDict["filtered_file"]}')
 
-memory_db.instance.conn.close() #this must be done when the SQL table is in-memory, as it is now
 exit()
