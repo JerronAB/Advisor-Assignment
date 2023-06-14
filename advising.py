@@ -126,7 +126,6 @@ class tableData:
             for row in self.Data:
                 my_writer.writerow(nonetoString(row))
 
-#QUICK TO DO LIST: make sure this class can maintain rows properly then perform dataSync; remember to use tableData's methods since it's the superclass
 class SQLTableSubclass(tableData):
     def __init__(self, db_tablename=None,db_filename="../temp.db") -> None:
         tableData.__init__(self)

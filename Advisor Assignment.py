@@ -12,6 +12,15 @@ except:
 
 [print(f'{key}: {envDict[key]}') for key in envDict]
 
+def removeOldDB():
+    #workaround to remove temp.db file
+    try:
+        from os import remove
+        remove('../temp.db')
+    except:
+        pass
+removeOldDB()
+
 advisorAPI = advising.AdvisorAPI()
 def advisorDecision(row):
     if row[0] != '' and row[1] == '' and row[2] == '':
@@ -48,20 +57,19 @@ exemptions = advising.CSVTableSubclass(envDict['exemptions'])
 exempt_dict = {int(row[0]): row for row in exemptions.Data} #row[0] is the student ID
 
 print('Generating all_assignments as an ordered, unfiltered list.')
-#all_assignments = advisorSQLDB.export('all_assignments',where_statement="ORDER BY EMPLID",complexlist=False) #list of list of items from table
-all_assignments = advising.SQLTableSubclass(db_tablename='all_assignments')
-all_assignments.dataPull(select_statement='SELECT * FROM all_assignments ORDER BY emplid')
+all_assignments = advising.SQLTableSubclass(db_tablename='all_assignments') #instance of class attached to all_assignments table
+all_assignments.dataPull(select_statement='SELECT * FROM all_assignments ORDER BY emplid') #set data for the instance to an ordered list
 untouched_advisors = envDict['UNTOUCHABLE_ADVISORS'].split(';')
-all_assignments_filtered = [row for row in all_assignments.Data if row[8] == 'E' and row[3] not in untouched_advisors]
+all_assignments_filtered = [row for row in all_assignments.Data if row[8] == 'E' and row[3] not in untouched_advisors] #filter by enrollment ('E') and advisors
 
-print('Using advisor associations to test advisor fidelity...')
+print('Using advisor associations to test advisor/program matches...')
 #turn this into a function
-for row in all_assignments_filtered: #eventually use mapRows for this
+for row in all_assignments_filtered:
     findCells = lambda line: (line[3],[line[4],line[5],line[6]]) 
     advisorCell,programCells = findCells(row) #uses lambda to grab relevant cells
     suggestCell = advisorAPI.testProgramAdvisor(advisorCell,programCells)
     try: 
-        suggestCell=f'Exemption with: {exempt_dict[int(row[0])][3]} Reason: {exempt_dict[int(row[0])][4]}' 
+        suggestCell=f'Exemption with: {exempt_dict[int(row[0])][3]} Reason: {exempt_dict[int(row[0])][4]}' #fails if studentID is not in exemption dictionary
     except: 
         pass
     row.insert(0,suggestCell)
@@ -71,9 +79,7 @@ header_list = all_assignments.Columns
 header_list.insert(0,"Advisor Suggestion:")
 
 print('Exporting unfiltered advisor assignment file...')
-unfiltered_export = advising.migrateData(all_assignments,"csv")
-unfiltered_export.Columns = header_list
-unfiltered_export.export(f'{envDict["unfiltered_file"]}')
+all_assignments.export(f'{envDict["unfiltered_file"]}')
 
 print('Exporting filtered advisor assignment file...')
 filtered_export = advising.CSVTableSubclass()
