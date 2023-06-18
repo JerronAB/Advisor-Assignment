@@ -153,11 +153,20 @@ class SQLTableSubclass(tableData):
             self.setData([list(item) for item in self.instance.cursor.execute(select_statement)])
 
 from csv import reader,writer #maybe this can just become a couple methods on the tableData class??
+import pickle
+from hashlib import md5
+from os import path
 class CSVTableSubclass(tableData): #creates and interacts with tableData object
     def __init__(self, filename=None) -> None:
         tableData.__init__(self)
         if filename is not None: self.fileIntake(filename)
     def fileIntake(self, filename):
+        self.checksum = md5(open(filename, 'rb').read()).hexdigest()
+        self.pklFile = filename.replace(".csv",".pkl")
+        if path.exists(f'{filename.replace(".csv",".pkl")}'): #maybe I could use try/except here?
+            data = pickle.load(filename.replace(".csv",".pkl")) 
+            if data.md5 == self.checksum: pass #gotta figure out how to arbitrarily add this to my list object
+            #maybe make self.data a small subclass of tuple, with this attribute added?
         with open(filename, 'r', encoding='ISO-8859-1') as csvfile: #UTF-8
                 self.filename = filename
                 newname = filename.split('\\')
@@ -165,6 +174,7 @@ class CSVTableSubclass(tableData): #creates and interacts with tableData object
                 csvData = [row for row in reader(csvfile)]
                 self.Columns = list(map(lambda input_str: input_str.replace("ï»¿",""), csvData.pop(0)))
                 self.setData(csvData)
+        
 
 def migrateData(source,target_class):
     print(f'Type of source: {type(source)}')
