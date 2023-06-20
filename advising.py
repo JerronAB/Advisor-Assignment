@@ -153,21 +153,45 @@ class SQLTableSubclass(tableData):
             self.setData([list(item) for item in self.instance.cursor.execute(select_statement)])
 
 from csv import reader,writer #maybe this can just become a couple methods on the tableData class??
+import pickle
+from hashlib import md5
+from os import path
 class CSVTableSubclass(tableData): #creates and interacts with tableData object
     def __init__(self, filename=None) -> None:
         tableData.__init__(self)
         if filename is not None: self.fileIntake(filename)
     def fileIntake(self, filename):
-        with open(filename, 'r', encoding='ISO-8859-1') as csvfile: #UTF-8
-                self.filename = filename
-                newname = filename.split('\\')
-                self.name = newname[-1].replace('.csv','')
+        self.filename = filename.split('\\')
+        self.filename = self.filename[-1]
+        self.checksum = md5(open(self.filename, 'rb').read()).hexdigest()
+        self.pklFile = self.filename.replace(".csv",".pkl")
+        try:
+            #instead of doing nested if/else statements, try/except seemed better. Opinions welcome
+            pkl = pickle.load(open(self.pklFile,'rb')) #fails and moves on if there's not a pkl file
+            print(f"Stored bytecode found from previous run; testing checksum for {self.filename}...")
+            if pkl['checksum'] == self.checksum: 
+                print('Checksums are the same! Importing data directly from bytecode.')
+                self.Columns = pkl['columns']
+                self.Data = pkl['data']
+                self.integrityCheck()
+            else: 
+                print('Checksums are not the same; importing CSV,')
+                raise Exception('Checksums are not the same; importing CSV.') #fails and moves on if checksums don't match
+        except:
+            with open(filename, 'r', encoding='ISO-8859-1') as csvfile: #this encoding makes Excel-exported CSV files readable
+                self.name = self.filename.replace('.csv','')
                 csvData = [row for row in reader(csvfile)]
                 self.Columns = list(map(lambda input_str: input_str.replace("ï»¿",""), csvData.pop(0)))
                 self.setData(csvData)
+                print(f"Dumping new data into pkl file: {self.pklFile}.")
+                pklDump = dict() # going to clean up later; this is prototyping
+                pklDump['checksum'] = self.checksum
+                pklDump['data'] = self.Data
+                pklDump['columns'] = self.Columns
+                pickle.dump(pklDump, open(self.pklFile,'wb'))
 
 def migrateData(source,target_class):
-    print(f'Type of source: {type(source)}')
+    print(f'Migrating data. Type of source: {type(source)}')
     if type(source) is SQLTableSubclass and target_class.lower() in ["csv","csvclass","csvobject"]: #we can probably reduce these to just 2 if-statements since we use the same underlying class
         CSVTable = CSVTableSubclass()
         CSVTable.Columns = source.Columns
