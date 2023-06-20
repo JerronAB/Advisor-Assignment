@@ -155,7 +155,6 @@ class SQLTableSubclass(tableData):
 from csv import reader,writer #maybe this can just become a couple methods on the tableData class??
 import pickle
 from hashlib import md5
-from os import path
 class CSVTableSubclass(tableData): #creates and interacts with tableData object
     def __init__(self, filename=None) -> None:
         tableData.__init__(self)
