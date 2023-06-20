@@ -22,6 +22,9 @@ def removeOldDB():
 removeOldDB()
 
 advisorAPI = advising.AdvisorAPI()
+print('Importing advisorList and associating advisors...')
+AdvisorList = advising.CSVTableSubclass(envDict['advisor_list'])
+@AdvisorList.mapRows
 def advisorDecision(row):
     if row[0] != '' and row[1] == '' and row[2] == '':
         advisorAPI.latestProgramName = row[0] #doing this so that I don't have to initialize an unnecesary global var. Instead, just mapping a new attribute to our instance. 
@@ -30,10 +33,6 @@ def advisorDecision(row):
         advisorAPI.addAdvisors(advisorAPI.latestProgramName,row[1])
     if row[2] != '':
         advisorAPI.addProgram(advisorAPI.latestProgramName,[row[2],row[3],row[4]])
-
-print('Importing advisorList and associating advisors...')
-AdvisorList = advising.CSVTableSubclass(envDict['advisor_list'])
-AdvisorList.mapRows(advisorDecision)
 
 print('Importing CSV\'s...')
 importableCSVs = envDict['import_csvs'].split(',')
