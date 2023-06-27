@@ -78,6 +78,10 @@ header_list = all_assignments.Columns
 header_list.insert(0,"Advisor Suggestion:")
 
 print('Exporting unfiltered advisor assignment file...')
+def BlankFirst(single_row):
+    if single_row[0].isnumeric(): single_row.insert(0,'Skipped')
+    return single_row
+all_assignments.mapRows(BlankFirst,inPlace=True)
 all_assignments.export(f'{envDict["unfiltered_file"]}')
 
 print('Exporting filtered advisor assignment file...')
