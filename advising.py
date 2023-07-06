@@ -29,7 +29,7 @@ class AdvisableSet: #functionality: store and maintain advisors and their progra
     def returnAdvisors(self) -> str: #study up on built-in dictionary methods for speed/efficiency
         testExist = lambda advisor: self.AdvisorCount(advisor,0) if advisor not in self.AdvisorCounts else True
         map(testExist,self.Advisors)
-        list_of_tuples = sorted(self.advisorCounts.items(),key=lambda x:x[1],)[:3] # dictionary.items() returns list of tuples; lambda is accessing second item in each tuple (the advisor count in this case)
+        list_of_tuples = sorted(self.advisorCounts.items(),key=lambda x:x[1],) # dictionary.items() returns list of tuples; lambda is accessing second item in each tuple (the advisor count in this case)
         return ', '.join(['{0} ({1})'.format(advisorCount_tuple[0],advisorCount_tuple[1]) for advisorCount_tuple in list_of_tuples])
 
 class AdvisorAPI: #this "API" maintains a dictionary of AdvisableSet instances, and coordinates info from tests.
@@ -110,7 +110,9 @@ class tableData:
         print(f'Running integrity check---')
         if not all(isinstance(line, list) and len(line) == len(self.Columns) for line in self.Data): raise TypeError("tableData data must be a tuple of lists with the same length as tableColumns")
         print('Passed.')
-    def deDup(self, dedupColumn): #make this nicer and cleaner
+    def deDup(self, dedupColumn,sortFx=None): #make this nicer and cleaner
+        if sortFx is not None:
+            self.Data = sorted(self.Data,key=sortFx,reverse=True) #this is not fully featured, I'm throwing it in to fix something. 
         index = self.Columns.index(dedupColumn)
         dedupping_set = set()
         dedupped_list = [item for item in self.Data if item[index] not in dedupping_set and not dedupping_set.add(item[index])] #set() does not allow duplicate values. Here we add all items to a set on each loop, and stop loop if item is in set already

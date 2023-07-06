@@ -38,6 +38,9 @@ print('Importing CSV\'s...')
 importableCSVs = envDict['import_csvs'].split(',')
 for filename in importableCSVs: #can't seem to use this w/ lambda and map
     csvObj = advising.CSVTableSubclass(filename)
+    filename = filename.split('\\') #this dedupping is not fully featured, I'm just throwing it in to fix something
+    filename = filename[-1]
+    if filename == "SGRP with date.csv": csvObj.deDup("EMPLID",lambda x: x[-1]) #orders everything by date, then dedups
     SQLTable = advising.migrateData(csvObj,"sql")
     SQLTable.dataPush()
 
