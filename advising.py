@@ -16,10 +16,10 @@ class AdvisableSet: #functionality: store and maintain advisors and their progra
     def addPrograms(self, programs):
         if all(type(item) is list for item in programs): [self.Programs.append(item) for item in programs]
         if all(type(item) is str for item in programs): self.Programs.append(programs) 
-    def testProgram(self, program):
-        return True if program in self.Programs else False
+    def testProgram(self, program): #returns true/false
+        return program in self.Programs
     def testAdvisor(self, advisor):
-        return True if advisor in self.Advisors else False
+        return advisor in self.Advisors
     def setAdvisorCount(self, advisor, number) -> None:
         if advisor not in self.Advisors: raise Exception(f'Advisor: {advisor} not in set: {self.name}')
         self.advisorCounts[advisor] = int(number)
@@ -58,14 +58,13 @@ class AdvisorAPI: #this "API" maintains a dictionary of AdvisableSet instances, 
         usableSet = self.findSet(program)
         if usableSet.testAdvisor(advisor): #it's gettin' messy; I'm using try/except to catch when there's no program. Can I do this in findSet instead? Yes. But that won't return an advisablesets object. 
             return 'Correct'
-        else:
-            return usableSet.returnAdvisors()
-    def incrementAdvisor(self, advisor): #GETTIN MESSY AGAIN
-        for set in self.AdvisableSets:
-            if self.AdvisableSets[set].testAdvisor(advisor): self.AdvisableSets[set].incrementAdvisorCount(advisor)
+        return usableSet.returnAdvisors()
+    def incrementAdvisor(self, advisor): #Using lambdas to avoid nesting
+        inc = lambda advSet: self.AdvisableSets[advSet].incrementAdvisorCount(advisor)
+        (inc(advSet) for advSet in self.AdvisableSets if self.AdvisableSets[advSet].testAdvisor(advisor))
     def setAdvisorCount(self, advisor, number):
-        for set in self.AdvisableSets:
-            if self.AdvisableSets[set].testAdvisor(advisor): self.AdvisableSets[set].setAdvisorCount(advisor, number)
+        setCount = lambda advSet: self.AdvisableSets[advSet].setAdvisorCount(advisor,number)
+        (setCount(advSet) for advSet in self.AdvisableSets if self.AdvisableSets[advSet].testAdvisor(advisor))
 
 #SQLITE3 section
 import sqlite3 as sqlt
