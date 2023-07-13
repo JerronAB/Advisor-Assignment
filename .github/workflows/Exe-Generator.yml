@@ -28,14 +28,26 @@ jobs:
     - name: Create .exe File
       run: |
         PyInstaller --onefile "Advisor Assignment.py" --distpath "D:\files"
+    
     - name: upload executable
       uses: actions/upload-artifact@v3
       with:
         name: Executable
         path: "D:\\files\\Advisor Assignment.exe"
+        retention-days: 90
     
     - name: upload supporting files
       uses: actions/upload-artifact@v3
       with:
         name: supporting files
         path: "D:\\a\\Advisor-Assignment\\Advisor-Assignment\\build"
+        retention-days: 14
+
+    - name: Commit report
+      run: |
+            powershell -command "cp 'D:\files\Advisor Assignment.exe' D:\a\Advisor-Assignment\Advisor-Assignment\Advisor Assignment.exe"
+            git config --global user.name 'JerronAB Action'
+            git config --global user.email 'JerronAB@users.noreply.github.com'
+            git add D:\a\Advisor-Assignment\Advisor-Assignment\Advisor Assignment.exe
+            git commit -am "Auto-generated Windows Executable"
+            git push
