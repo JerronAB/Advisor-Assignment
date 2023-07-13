@@ -1,1 +1,38 @@
 #this will remain empty until I figure out how we can get this working
+
+name: Package Application with Pyinstaller
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+    strategy:
+        matrix:
+          python-version: ["3.11"]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Update Python and Install PyInstaller
+      run: |
+        python -m pip install --upgrade pip
+        pip install PyInstaller
+    - name: Create .exe File
+      run: |
+        PyInstaller --onefile "Advisor Assignment.py"
+    - name: echoing filesystem
+      run: powershell -command "$temp = (dir -Recurse C:\); set-content -Value $temp -Path C:\file-info.txt"
+    - name: upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: directory-results.txt
+        path: C:\file-info.txt
