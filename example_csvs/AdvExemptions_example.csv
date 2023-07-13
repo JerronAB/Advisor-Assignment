@@ -1,3 +1,3 @@
 STD_ID,STD_Name,Static_AdvID,Static_AdvName,Exempt_Reason
-9999900,Student 1,1111112,Another Advisor,Undecided between NUR and RAD; stays in PD until decision is made. 
-9999901,Student 2,1111112,Another Advisor,More misc info
+12,Student 1,111111111,Some Advisor,This is where you display your exception reasons. 
+13,Student 2,999999999,Another Advisor,More misc info
