@@ -9,8 +9,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-
+  build-exe:
     runs-on: windows-latest
     strategy:
         matrix:
@@ -28,11 +27,9 @@ jobs:
         pip install PyInstaller
     - name: Create .exe File
       run: |
-        PyInstaller --onefile "Advisor Assignment.py"
-    - name: echoing filesystem
-      run: powershell -command "$temp = (dir -Recurse C:\); set-content -Value $temp -Path C:\file-info.txt"
+        PyInstaller --onefile "Advisor Assignment.py" --distpath "D:\files"
     - name: upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: directory-results.txt
-        path: C:\file-info.txt
+        name: PyInstaller-Files
+        path: "D:\\files\\"
