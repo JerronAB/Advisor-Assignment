@@ -28,8 +28,14 @@ jobs:
     - name: Create .exe File
       run: |
         PyInstaller --onefile "Advisor Assignment.py" --distpath "D:\files"
-    - name: upload artifacts
+    - name: upload executable
       uses: actions/upload-artifact@v3
       with:
-        name: PyInstaller-Files
-        path: "D:\\files\\"
+        name: Executable
+        path: "D:\\files\\Advisor Assignment.exe"
+    
+    - name: upload supporting files
+      uses: actions/upload-artifact@v3
+      with:
+        name: supporting files
+        path: "D:\\a\\Advisor Assignment\\Advisor-Assignment\\build"
