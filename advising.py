@@ -1,7 +1,3 @@
-#Goals:
-#Use map more often than list generators
-#use composition from builtin python classes
-
 class AdvisableSet: #functionality: store and maintain advisors and their programs; determine correct advisor/program
     def __init__(self, name=None) -> None:
         self.name = name
@@ -146,12 +142,9 @@ class SQLTableSubclass(tableData):
         self.instance.conn.close()
     def dataPull(self,select_statement=None):
         print(f'Initiating data pull... ')
-        if select_statement is None:
-            self.Columns = [header[1] for header in self.instance.cursor.execute(f'PRAGMA table_info ({self.table})')]
-            self.setData([list(item) for item in self.instance.cursor.execute(f'SELECT * FROM {self.table}')])
-        else:
-            self.Columns = [header[1] for header in self.instance.cursor.execute(f'PRAGMA table_info ({self.table})')]
-            self.setData([list(item) for item in self.instance.cursor.execute(select_statement)])
+        self.Columns = [header[1] for header in self.instance.cursor.execute(f'PRAGMA table_info ({self.table})')]
+        if select_statement is None: self.setData([list(item) for item in self.instance.cursor.execute(f'SELECT * FROM {self.table}')])
+        else: self.setData([list(item) for item in self.instance.cursor.execute(select_statement)])
 
 from csv import reader,writer #maybe this can just become a couple methods on the tableData class??
 import pickle
