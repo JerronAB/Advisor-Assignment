@@ -47,8 +47,7 @@ for filename in importableCSVs: #can't seem to use this w/ lambda and map
 print('Importing and setting advisor count...')
 adv_counts = advising.SQLTableSubclass(db_tablename='advisor_assignment_count')
 adv_counts.dataPull('SELECT * FROM advisor_assignment_count WHERE STDNT_ENRL_STATUS = \'Enrolled\'')
-for item in adv_counts.Data:
-    advisorAPI.setAdvisorCount(item[0],int(item[1]))
+[advisorAPI.setAdvisorCount(item[0],int(item[1])) for item in adv_counts.Data]
 print('Creating new table...')
 #"execute"can be called by any available SQLTableSubclass instance; I used one from above to make things slightly faster
 adv_counts.execute('''CREATE TABLE all_assignments AS SELECT current_term.EMPLID, current_term.STUDENT_NAME, current_term.ADVISOR_ID, current_term.ADVISOR_NAME, current_term.DESCR2, current_term.SUBPLAN_DESCR, sgrp_with_date.STDGR_STDNT_GROUP, sgrp_with_date.STDGR_STDNT_GROUP_LDESC, current_term.STDNT_ENRL_STATUS, current_term_enrollment.ENRL_ADD_DT, sgrp_with_date.EFFDT, SI_Probation.SRVC_IND_CD, SI_Probation.SRVC_IND_REFRNCE, current_term.K_HOME_CAMPUS, previous_term.REQ_TERM, current_term.ACTION_DT, current_term.PROG_ACTION, current_term.STDNT_CAR_NBR

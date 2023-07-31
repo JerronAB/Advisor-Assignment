@@ -64,7 +64,7 @@ class AdvisorAPI: #this "API" maintains a dictionary of AdvisableSet instances, 
         (inc(advSet) for advSet in self.AdvisableSets if self.AdvisableSets[advSet].testAdvisor(advisor))
     def setAdvisorCount(self, advisor, number):
         setCount = lambda advSet: self.AdvisableSets[advSet].setAdvisorCount(advisor,number)
-        (setCount(advSet) for advSet in self.AdvisableSets if self.AdvisableSets[advSet].testAdvisor(advisor))
+        [setCount(advSet) for advSet in self.AdvisableSets if self.AdvisableSets[advSet].testAdvisor(advisor)]
 
 #SQLITE3 section
 import sqlite3 as sqlt
