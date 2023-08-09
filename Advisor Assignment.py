@@ -36,9 +36,9 @@ def modAdvisorChanges(filename,outputFilename): #takes all rows w/ empty ID's an
          completedList = advising.CSVTableSubclass(filename,skipPkl=True)
          emptyAdvID = lambda row: row[3] == ''
          completedList.prune(emptyAdvID)
-         print(completedList.Data)
-         completedList.export(outputFilename)
-         exit()
+         if len(completedList.Data) != 0: 
+            completedList.export(outputFilename)
+            exit()
 
 modAdvisorChanges(envDict['filtered_file'],envDict['peoplesoft_file'])
 
