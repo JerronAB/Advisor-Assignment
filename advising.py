@@ -101,6 +101,10 @@ class tableData:
         print(f'Modifying in-place: {inPlace}')
         if inPlace is True: self.Data = [mappedFunction(row) for row in self.Data if row is not None]
         else: return [mappedFunction(row) for row in self.Data if row is not None]
+    def prune(self,testFunction,inPlace=True):
+        #print([row for row in self.Data if testFunction(row)])
+        if inPlace is True: self.Data = [row for row in self.Data if testFunction(row)]
+        else: return [row for row in self.Data if testFunction(row)]
     def integrityCheck(self):
         print(f'Running integrity check---')
         if not all(isinstance(line, list) and len(line) == len(self.Columns) for line in self.Data): raise TypeError("tableData data must be a tuple of lists with the same length as tableColumns")
@@ -150,19 +154,19 @@ from csv import reader,writer #maybe this can just become a couple methods on th
 import pickle
 from hashlib import md5
 class CSVTableSubclass(tableData): #creates and interacts with tableData object
-    def __init__(self, filename=None) -> None:
+    def __init__(self, filename=None, skipPkl=False) -> None:
         tableData.__init__(self)
-        if filename is not None: self.fileIntake(filename)
-    def fileIntake(self, filename):
-        self.filename = filename.split('\\')
-        self.filename = self.filename[-1]
-        self.checksum = md5(open(self.filename, 'rb').read()).hexdigest()
-        self.pklFile = self.filename.replace(".csv",".pkl")
+        if filename is not None: self.fileIntake(filename,skipPickle=skipPkl)
+    def fileIntake(self, filename, skipPickle=False):
+        self.name = filename.split('\\')
+        self.name = self.name[-1]
+        self.pklFile = filename.replace(".csv",".pkl")
         try:
+            if skipPickle: raise LookupError
             #instead of doing nested if/else statements, try/except seemed better. Opinions welcome
             pkl = pickle.load(open(self.pklFile,'rb')) #fails and moves on if there's not a pkl file
-            print(f"Stored bytecode found from previous run; testing checksum for {self.filename}...")
-            if pkl['checksum'] == self.checksum: 
+            print(f"Stored bytecode found from previous run; testing checksum for {self.name}...")
+            if pkl['checksum'] == md5(open(filename, 'rb').read()).hexdigest(): 
                 print('Checksums are the same! Importing data directly from bytecode.')
                 self.Columns = pkl['columns']
                 self.Data = pkl['data']
@@ -172,16 +176,17 @@ class CSVTableSubclass(tableData): #creates and interacts with tableData object
                 raise Exception('Checksums are not the same; importing CSV.') #fails and moves on if checksums don't match
         except:
             with open(filename, 'r', encoding='ISO-8859-1') as csvfile: #this encoding makes Excel-exported CSV files readable
-                self.name = self.filename.replace('.csv','')
+                self.name = self.name.replace('.csv','')
                 csvData = [row for row in reader(csvfile)]
                 self.Columns = list(map(lambda input_str: input_str.replace("ï»¿",""), csvData.pop(0)))
                 self.setData(csvData)
-                print(f"Dumping new data into pkl file: {self.pklFile}.")
-                pklDump = dict() # going to clean up later; this is prototyping
-                pklDump['checksum'] = self.checksum
-                pklDump['data'] = self.Data
-                pklDump['columns'] = self.Columns
-                pickle.dump(pklDump, open(self.pklFile,'wb'))
+                if not skipPickle:
+                    print(f"Dumping new data into pkl file: {self.pklFile}.")
+                    pklDump = dict()
+                    pklDump['checksum'] = md5(open(filename, 'rb').read()).hexdigest()
+                    pklDump['data'] = self.Data
+                    pklDump['columns'] = self.Columns
+                    pickle.dump(pklDump, open(self.pklFile,'wb'))
 
 def migrateData(source,target_class):
     print(f'Migrating data. Type of source: {type(source)}')

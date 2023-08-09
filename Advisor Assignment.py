@@ -1,10 +1,14 @@
+#NEXT STEP: test if AdvAssignment is complete; if so, generate ID strings in CSV
 import advising
 
 try:
     envDict = {}
     with open('.env') as envFile:
+        from os import path
+        homepath = path.expanduser('~')
         for line in envFile:
             if line[0] != "#": key, value = line.strip().split('=')
+            value = value.replace('~',homepath)
             envDict[key.strip()] = value.strip()
 except:
     print('.env file was not found, but is required for this script. Is your Python session running in the correct directory?\n')
@@ -16,10 +20,27 @@ def removeOldDB():
     #workaround to remove temp.db file
     try:
         from os import remove
-        remove('../temp.db')
+        remove(envDict['db_file'])
     except:
         pass
 removeOldDB()
+
+#if exists(envDict[filtered_file]): -> done
+# import and modify -> partially done
+# then, move files to ow-pe2800 drive
+
+def modAdvisorChanges(filename,outputFilename): #takes all rows w/ empty ID's and creates a new file from them
+     from os import path
+     if path.exists(filename):
+         print('Potentially completed advisor assignment file found...') 
+         completedList = advising.CSVTableSubclass(filename,skipPkl=True)
+         emptyAdvID = lambda row: row[3] == ''
+         completedList.prune(emptyAdvID)
+         print(completedList.Data)
+         completedList.export(outputFilename)
+         exit()
+
+modAdvisorChanges(envDict['filtered_file'],envDict['peoplesoft_file'])
 
 advisorAPI = advising.AdvisorAPI()
 print('Importing advisorList and associating advisors...')
