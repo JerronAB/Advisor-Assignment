@@ -31,16 +31,35 @@ removeOldDB()
 
 def modAdvisorChanges(filename,outputFilename): #takes all rows w/ empty ID's and creates a new file from them
      from os import path
+     if path.exists(envDict['peoplesoft_file']): raise FileExistsError(f'{envDict["peoplesoft_file"]} already exists and will not be overwritten.')
      if path.exists(filename):
          print('Potentially completed advisor assignment file found...') 
          completedList = advising.CSVTableSubclass(filename,skipPkl=True)
          emptyAdvID = lambda row: row[3] == ''
-         completedList.prune(emptyAdvID)
-         if len(completedList.Data) != 0: 
-            completedList.export(outputFilename)
+         completedList.prune(emptyAdvID) #removes any rows that DON'T have an empty advisor ID
+         if len(completedList.Data) != 0:
+            IDList = advising.CSVTableSubclass(envDict['advisor_list'])
+            def IDColumns(row): #this is an inefficient lookup process, but it shouldn't matter
+                advID = 'FIND MANUALLY'
+                for sublist in IDList.Data:
+                    if sublist[1] == row[4]: 
+                        advID = sublist[0] #returning the ID in adivsorList if the name matches
+                        break
+                return [row[1],advID]
+            completedList.mapRows(IDColumns,True)
+            completedList.export(outputFilename, exportColumns=False)
             exit()
 
 modAdvisorChanges(envDict['filtered_file'],envDict['peoplesoft_file'])
+
+def moveAdvisorFiles(fileRoot): #this might have to run first and exit if conditions are met
+    from os import path
+    if path.exists(envDict['peoplesoft_file']):
+        from datetime import datetime
+        month_year = datetime.now().strftime("%B %Y")
+        print(month_year)
+
+#moveAdvisorFiles(envDict['storage_root'])
 
 advisorAPI = advising.AdvisorAPI()
 print('Importing advisorList and associating advisors...')
