@@ -85,7 +85,7 @@ for filename in importableCSVs: #can't seem to use this w/ lambda and map
     SQLTable.dataPush()
 
 print('Importing and setting advisor count...')
-adv_counts = advising.SQLTableSubclass(db_tablename='advisor_assignment_count')
+adv_counts = advising.SQLTableSubclass(db_tablename='advisor_assignment_count',db_filename=envDict['db_file'])
 adv_counts.dataPull('SELECT * FROM advisor_assignment_count WHERE STDNT_ENRL_STATUS = \'Enrolled\'')
 [advisorAPI.setAdvisorCount(item[0],int(item[1])) for item in adv_counts.Data]
 print('Creating new table...')
@@ -98,7 +98,7 @@ exemptions = advising.CSVTableSubclass(envDict['exemptions'])
 exempt_dict = {int(row[0]): row for row in exemptions.Data} #row[0] is the student ID
 
 print('Generating all_assignments as an ordered, unfiltered list.')
-all_assignments = advising.SQLTableSubclass(db_tablename='all_assignments') #instance of class attached to all_assignments table
+all_assignments = advising.SQLTableSubclass(db_tablename='all_assignments',db_filename=envDict['db_file']) #instance of class attached to all_assignments table
 all_assignments.dataPull(select_statement='SELECT * FROM all_assignments ORDER BY emplid') #set data for the instance to an ordered list
 untouched_advisors = envDict['UNTOUCHABLE_ADVISORS'].split(';')
 all_assignments_filtered = [row for row in all_assignments.Data if row[8] == 'E' and row[3] not in untouched_advisors] #filter by enrollment ('E') and advisors
