@@ -40,7 +40,7 @@ def modAdvisorChanges(filename,outputFilename): #takes all rows w/ empty ID's an
          if len(completedList.Data) != 0:
             IDList = advising.CSVTableSubclass(envDict['advisor_list'])
             def IDColumns(row): #this is an inefficient lookup process, but it shouldn't matter
-                advID = 'FIND MANUALLY'
+                advID = f'FIND MANUALLY {row[4]}'
                 for sublist in IDList.Data:
                     if sublist[1] == row[4]: 
                         advID = sublist[0] #returning the ID in adivsorList if the name matches
