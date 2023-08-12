@@ -1,18 +1,14 @@
 #NEXT STEP: test if AdvAssignment is complete; if so, generate ID strings in CSV
 import advising
 
-try:
-    envDict = {}
-    with open('.env') as envFile:
-        from os import path
-        homepath = path.expanduser('~')
-        for line in envFile:
-            if line[0] != "#": key, value = line.strip().split('=')
-            value = value.replace('~',homepath)
-            envDict[key.strip()] = value.strip()
-except:
-    print('.env file was not found, but is required for this script. Is your Python session running in the correct directory?\n')
-    exit()
+envDict = {}
+with open('.env') as envFile:
+    from os import path
+    homepath = path.expanduser('~')
+    for line in envFile:
+        if line[0] != "#": key, value = line.strip().split('=')
+        value = value.replace('~',homepath)
+        envDict[key.strip()] = value.strip()
 
 [print(f'{key}: {envDict[key]}') for key in envDict]
 
@@ -26,7 +22,8 @@ def removeOldDB():
 removeOldDB()
 
 #if exists(envDict[filtered_file]): -> done
-# import and modify -> partially done
+# import and modify -> done
+# generate diff report - test diff between unfiltered & filtered IF unfiltered checksum is unchanged
 # then, move files to ow-pe2800 drive
 
 def modAdvisorChanges(filename,outputFilename): #takes all rows w/ empty ID's and creates a new file from them
@@ -40,7 +37,7 @@ def modAdvisorChanges(filename,outputFilename): #takes all rows w/ empty ID's an
          if len(completedList.Data) != 0:
             IDList = advising.CSVTableSubclass(envDict['advisor_list'])
             def IDColumns(row): #this is an inefficient lookup process, but it shouldn't matter
-                advID = f'FIND MANUALLY {row[4]}'
+                advID = f'FIND ID MANUALLY: {row[4]}'
                 for sublist in IDList.Data:
                     if sublist[1] == row[4]: 
                         advID = sublist[0] #returning the ID in adivsorList if the name matches
