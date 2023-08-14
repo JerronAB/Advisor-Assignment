@@ -26,31 +26,9 @@ removeOldDB()
 # generate diff report - test diff between unfiltered & filtered IF unfiltered checksum is unchanged
 # then, move files to ow-pe2800 drive
 
-def finalizeAdvChanges(filename,outputFilename): #takes all rows w/ empty ID's and creates a new file from them
-    print('Potentially completed advisor assignment file found...') 
-    from os import path
-    if path.exists(envDict['peoplesoft_file']): raise FileExistsError(f'{envDict["peoplesoft_file"]} already exists and will not be overwritten.')
-    completedList = advising.CSVTableSubclass(filename,skipPkl=True)
-    #the following lines remove any rows that DON'T have an empty advisor ID
-    emptyAdvID = lambda row: row[3] == ''
-    completedList.prune(emptyAdvID)
-    if len(completedList.Data) != 0:
-        IDList = advising.CSVTableSubclass(envDict['advisor_list'])
-        def IDColumns(row): #this is an inefficient lookup process, but it shouldn't matter
-            advID = f'FIND ID MANUALLY: {row[4]}'
-            for sublist in IDList.Data:
-                if sublist[1] == row[4]: 
-                    advID = sublist[0] #returning the ID in adivsorList if the name matches
-                    break
-            return [row[1],advID]
-        completedList.mapRows(IDColumns,True)
-        completedList.export(outputFilename, exportColumns=False)
-        moveAdvisorFiles(envDict['storage_root'])
-        exit()
-
-if path.exists(envDict['filtered_file']) and not path.exists(envDict['peoplesoft_file']): finalizeAdvChanges(envDict['filtered_file'],envDict['peoplesoft_file'])
-
 def moveAdvisorFiles(fileRoot): #this might have to run first and exit if conditions are met
+    from sys import setrecursionlimit
+    setrecursionlimit(100) #doing this because on accidental recursion error, I could DDOS the fileserver
     print(f'\'{envDict["peoplesoft_file"]}\' file found, copying files to storage: {envDict["storage_root"]}')
     from os import path, makedirs, system
     simple_dates = {i:'th' for i in range(32) if str(i)[-1] == '0'} #if last digit in 
@@ -69,24 +47,53 @@ def moveAdvisorFiles(fileRoot): #this might have to run first and exit if condit
     def addToday(iteration=1): #making this a function so it can be recursive
         try:
             global folder #I do this so we can access it later
-            if iteration == 1: folder = f'{fileserver}{month_year}/{today}/'
-            else: folder = f'{fileserver}{month_year}/{today} - {i}{simple_dates[i]} run/'
+            if iteration == 1: folder = f'{fileserver}{month_year}/{today}{simple_dates[int(today)]}/'
+            else: folder = f'{fileserver}{month_year}/{today}{simple_dates[int(today)]} - {iteration}{simple_dates[iteration]} run/'
             print(f'{folder}')
             makedirs(f'{folder}')
         except FileExistsError:
             iteration += 1
             addToday(iteration)
+        except:
+            print('ANOTHER ERROR HAS OCCURRED. ')
     addToday()
     #now copying the files, except for finalized temp.csv
     def copyFile(source):
-        print(f'Running command: copy {source} {folder}')
-        system(f'copy {envDict} {folder}')
+        print('copy "{}" "{}"'.format(source.replace("/","\\"),folder.replace("/","\\"))) #f-strings don't allow backslashes in expressions
+        system('copy "{}" "{}"'.format(source.replace("/","\\"),folder.replace("/","\\")))
     for file in envDict['import_csvs'].split(','): copyFile(file)
     copyFile(envDict['peoplesoft_file'])
     copyFile(envDict['filtered_file'])
     copyFile(envDict['unfiltered_file'])
+    exit()
 
 if path.exists(envDict['peoplesoft_file']): moveAdvisorFiles(envDict['storage_root'])
+
+def finalizeAdvChanges(filename,outputFilename): #takes all rows w/ empty ID's and creates a new file from them
+    print('Potentially completed advisor assignment file found...') 
+    from os import path
+    if path.exists(envDict['peoplesoft_file']): raise FileExistsError(f'{envDict["peoplesoft_file"]} already exists and will not be overwritten.')
+    completedList = advising.CSVTableSubclass(filename,skipPkl=True)
+    #the following lines remove any rows that DON'T have an empty advisor ID
+    emptyAdvID = lambda row: row[3] == ''
+    completedList.prune(emptyAdvID)
+    if len(completedList.Data) != 0:
+        IDList = advising.CSVTableSubclass(envDict['advisor_list'])
+        def IDColumns(row): 
+            #this is an inefficient lookup process, but it shouldn't matter
+            #later I'll make the advID from advisorList searchable first
+            advID = f'FIND ID MANUALLY: {row[4]}'
+            for sublist in IDList.Data:
+                if sublist[1] == row[4]: 
+                    advID = sublist[0] #returning the ID in adivsorList if the name matches
+                    break
+            return [row[1],advID]
+        completedList.mapRows(IDColumns,True)
+        completedList.export(outputFilename, exportColumns=False)
+        moveAdvisorFiles(envDict['storage_root'])
+        exit()
+
+if path.exists(envDict['filtered_file']) and not path.exists(envDict['peoplesoft_file']): finalizeAdvChanges(envDict['filtered_file'],envDict['peoplesoft_file'])
 
 advisorAPI = advising.AdvisorAPI()
 print('Importing advisorList and associating advisors...')
