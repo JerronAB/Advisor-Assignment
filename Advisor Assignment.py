@@ -21,10 +21,7 @@ def removeOldDB():
         pass
 removeOldDB()
 
-#if exists(envDict[filtered_file]): -> done
-# import and modify -> done
-# generate diff report - test diff between unfiltered & filtered IF unfiltered checksum is unchanged
-# then, move files to ow-pe2800 drive
+#this first portion checks to see if this program has already been run, and if Advisor Assignment has already been done. 
 
 def moveAdvisorFiles(fileRoot): #this might have to run first and exit if conditions are met
     from sys import setrecursionlimit
@@ -95,6 +92,7 @@ def finalizeAdvChanges(filename,outputFilename): #takes all rows w/ empty ID's a
 
 if path.exists(envDict['filtered_file']) and not path.exists(envDict['peoplesoft_file']): finalizeAdvChanges(envDict['filtered_file'],envDict['peoplesoft_file'])
 
+#The actual advisor assignment occurs here. 
 advisorAPI = advising.AdvisorAPI()
 print('Importing advisorList and associating advisors...')
 AdvisorList = advising.CSVTableSubclass(envDict['advisor_list'])
