@@ -27,36 +27,65 @@ removeOldDB()
 # then, move files to ow-pe2800 drive
 
 def modAdvisorChanges(filename,outputFilename): #takes all rows w/ empty ID's and creates a new file from them
-     from os import path
-     if path.exists(envDict['peoplesoft_file']): raise FileExistsError(f'{envDict["peoplesoft_file"]} already exists and will not be overwritten.')
-     if path.exists(filename):
-         print('Potentially completed advisor assignment file found...') 
-         completedList = advising.CSVTableSubclass(filename,skipPkl=True)
-         emptyAdvID = lambda row: row[3] == ''
-         completedList.prune(emptyAdvID) #removes any rows that DON'T have an empty advisor ID
-         if len(completedList.Data) != 0:
-            IDList = advising.CSVTableSubclass(envDict['advisor_list'])
-            def IDColumns(row): #this is an inefficient lookup process, but it shouldn't matter
-                advID = f'FIND ID MANUALLY: {row[4]}'
-                for sublist in IDList.Data:
-                    if sublist[1] == row[4]: 
-                        advID = sublist[0] #returning the ID in adivsorList if the name matches
-                        break
-                return [row[1],advID]
-            completedList.mapRows(IDColumns,True)
-            completedList.export(outputFilename, exportColumns=False)
-            exit()
+    print('Potentially completed advisor assignment file found...') 
+    from os import path
+    if path.exists(envDict['peoplesoft_file']): raise FileExistsError(f'{envDict["peoplesoft_file"]} already exists and will not be overwritten.')
+    completedList = advising.CSVTableSubclass(filename,skipPkl=True)
+    #the following lines remove any rows that DON'T have an empty advisor ID
+    emptyAdvID = lambda row: row[3] == ''
+    completedList.prune(emptyAdvID)
+    if len(completedList.Data) != 0:
+       IDList = advising.CSVTableSubclass(envDict['advisor_list'])
+       def IDColumns(row): #this is an inefficient lookup process, but it shouldn't matter
+           advID = f'FIND ID MANUALLY: {row[4]}'
+           for sublist in IDList.Data:
+               if sublist[1] == row[4]: 
+                   advID = sublist[0] #returning the ID in adivsorList if the name matches
+                   break
+           return [row[1],advID]
+       completedList.mapRows(IDColumns,True)
+       completedList.export(outputFilename, exportColumns=False)
+       exit()
 
-modAdvisorChanges(envDict['filtered_file'],envDict['peoplesoft_file'])
+if path.exists(envDict['filtered_file']) and not path.exists(envDict['peoplesoft_file']): modAdvisorChanges(envDict['filtered_file'],envDict['peoplesoft_file'])
 
 def moveAdvisorFiles(fileRoot): #this might have to run first and exit if conditions are met
-    from os import path
-    if path.exists(envDict['peoplesoft_file']):
-        from datetime import datetime
-        month_year = datetime.now().strftime("%B %Y")
-        print(month_year)
+    print(f'\'{envDict["peoplesoft_file"]}\' file found, copying files to storage: {envDict["storage_root"]}')
+    from os import path, makedirs, system
+    simple_dates = {i:'th' for i in range(32) if str(i)[-1] == '0'} #if last digit in 
+    simple_dates.update({i:'st' for i in range(32) if str(i)[-1] == '1'})
+    simple_dates.update({i:'nd' for i in range(32) if str(i)[-1] == '2'})
+    simple_dates.update({i:'rd' for i in range(32) if str(i)[-1] == '3'})
+    simple_dates.update({i:'th' for i in range(32) if str(i)[-1] in ('4','5','6','7','8','9')})
+    for i in ('11','12','13'): simple_dates[i] = 'th'
+    fileserver = fileRoot
+    #creating the folders
+    from datetime import datetime
+    month_year = datetime.now().strftime("%B %Y")
+    today = datetime.now().strftime("%d")
+    print(f'Testing for existing path: {fileserver}{month_year}')
+    if not path.exists(f'{fileserver}{month_year}'): makedirs(f'{fileserver}{month_year}')
+    i = 1
+    def addToday(): #making this a function so it can be recursive
+        try:
+            global folder #I do this so we can access it later
+            if i == 1: folder = f'{fileserver}{month_year}\\{today}\\'
+            else: folder = f'{fileserver}{month_year}\\{today} - {i}{simple_dates[i]} run\\'
+            makedirs(f'{folder}')
+        except FileExistsError:
+            i += 1
+            addToday()
+    addToday()
+    #now copying the files, except for finalized temp.csv
+    def copyFile(source):
+        print(f'Running command: copy {source} {folder}')
+        system(f'copy {envDict} {folder}')
+    for file in envDict['import_csvs'].split(','): copyFile(file)
+    copyFile(envDict['peoplesoft_file'])
+    copyFile(envDict['filtered_file'])
+    copyFile(envDict['unfiltered_file'])
 
-#moveAdvisorFiles(envDict['storage_root'])
+if path.exists(envDict['peoplesoft_file']): moveAdvisorFiles(envDict['storage_root'])
 
 advisorAPI = advising.AdvisorAPI()
 print('Importing advisorList and associating advisors...')
