@@ -135,7 +135,7 @@ class tableData:
             writeOut()
         except FileExistsError:
             if ignoreExistingFiles: writeOut()
-            else: raise FileExistsError(f'Flag ignoreExistingFiles set to False. The file {filename} already exists, so it will not be overwritten. ')
+            else: raise FileExistsError(f'Flag ignoreExistingFiles set to False. The file {filename} already exists, so it will not be overwritten. Call script with "--ignore-existing" to bypass.')
             
 
 class SQLTableSubclass(tableData):
