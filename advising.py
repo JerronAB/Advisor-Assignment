@@ -117,14 +117,26 @@ class tableData:
         dedupped_list = [item for item in self.Data if item[index] not in dedupping_set and not dedupping_set.add(item[index])] #set() does not allow duplicate values. Here we add all items to a set on each loop, and stop loop if item is in set already
         self.Data = ()
         self.setData(dedupped_list)
-    def export(self,filename,exportColumns=True): #looking at export function to make sure it doesn't export empty cells
+    def export(self,filename,exportColumns=True,ignoreExistingFiles=False): #looking at export function to make sure it doesn't export empty cells
         #this uses the 'writer' function from the csv module
         nonetoString = lambda cells: [str(cell or '') for cell in cells]
         print(f'Writing to... {filename}')
-        with open(filename,'w',newline='') as csv_file:
-            my_writer = writer(csv_file, delimiter = ',')
-            if exportColumns: my_writer.writerow(nonetoString(self.Columns))
-            [my_writer.writerow(nonetoString(row)) for row in self.Data]
+        def writeOut():
+            with open(filename, 'w', newline='') as csv_file:
+                my_writer = writer(csv_file, delimiter = ',')
+                if exportColumns: my_writer.writerow(nonetoString(self.Columns))
+                [my_writer.writerow(nonetoString(row)) for row in self.Data]
+        try: 
+            #bare with me; if this successfully reads from the file, we know it's there and don't want to overwrite it, so we raise error
+            #If we CAN'T find it, we know we can export the file fine. 
+            with open(filename, 'r'): raise FileExistsError()
+            #This avoids needing to import the os module; I'm open to suggestions here though
+        except FileNotFoundError:
+            writeOut()
+        except FileExistsError:
+            if ignoreExistingFiles: writeOut()
+            else: raise FileExistsError(f'Flag ignoreExistingFiles set to False. The file {filename} already exists, so it will not be overwritten. ')
+            
 
 class SQLTableSubclass(tableData):
     def __init__(self, db_tablename=None,db_filename="../temp.db") -> None:

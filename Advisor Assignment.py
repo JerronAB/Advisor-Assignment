@@ -63,18 +63,18 @@ def moveAdvisorFiles(fileRoot): #this might have to run first and exit if condit
     from datetime import datetime
     month_year = datetime.now().strftime("%B %Y")
     today = datetime.now().strftime("%d")
-    print(f'Testing for existing path: {fileserver}{month_year}')
-    if not path.exists(f'{fileserver}{month_year}'): makedirs(f'{fileserver}{month_year}')
-    i = 1
-    def addToday(): #making this a function so it can be recursive
+    print('Testing for existing path: {}{}'.format(fileserver,month_year))
+    if not path.exists(f'{fileserver}{month_year}'): makedirs('{}{}'.format(fileserver,month_year))
+    def addToday(iteration=1): #making this a function so it can be recursive
         try:
             global folder #I do this so we can access it later
-            if i == 1: folder = f'{fileserver}{month_year}\\{today}\\'
-            else: folder = f'{fileserver}{month_year}\\{today} - {i}{simple_dates[i]} run\\'
+            if iteration == 1: folder = f'{fileserver}{month_year}/{today}/'
+            else: folder = f'{fileserver}{month_year}/{today} - {i}{simple_dates[i]} run/'
+            print(f'{folder}')
             makedirs(f'{folder}')
         except FileExistsError:
-            i += 1
-            addToday()
+            iteration += 1
+            addToday(iteration)
     addToday()
     #now copying the files, except for finalized temp.csv
     def copyFile(source):
@@ -104,7 +104,7 @@ print('Importing CSV\'s...')
 importableCSVs = envDict['import_csvs'].split(',')
 for filename in importableCSVs: #can't seem to use this w/ lambda and map
     csvObj = advising.CSVTableSubclass(filename)
-    filename = filename.split('\\') #this dedupping is not fully featured, I'm just throwing it in to fix something
+    filename = filename.split('/') #this dedupping is not fully featured, I'm just throwing it in to fix something
     filename = filename[-1]
     if filename == "SGRP with date.csv": csvObj.deDup("EMPLID",lambda x: x[-1]) #orders everything by date, then dedups
     SQLTable = advising.migrateData(csvObj,"sql")
@@ -145,18 +145,24 @@ for row in all_assignments_filtered:
 header_list = all_assignments.Columns
 header_list.insert(0,"Advisor Suggestion:")
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--ignore-existing', action='store_true', help='Ignore existing files')
+args = parser.parse_args()
+ignoreExistingFiles = args.ignore_existing
+
 print('Exporting unfiltered advisor assignment file...')
 def BlankFirst(single_row):
     if single_row[0].isnumeric(): single_row.insert(0,'Skipped')
     return single_row
 all_assignments.mapRows(BlankFirst,inPlace=True)
-all_assignments.export(f'{envDict["unfiltered_file"]}')
+all_assignments.export(f'{envDict["unfiltered_file"]}',ignoreExistingFiles=ignoreExistingFiles)
 
 print('Exporting filtered advisor assignment file...')
 filtered_export = advising.CSVTableSubclass()
 filtered_export.Columns = header_list
 filtered_export.setData(all_assignments_filtered)
 filtered_export.deDup('EMPLID')
-filtered_export.export(f'{envDict["filtered_file"]}')
+filtered_export.export(f'{envDict["filtered_file"]}',ignoreExistingFiles=ignoreExistingFiles)
 
 exit()
