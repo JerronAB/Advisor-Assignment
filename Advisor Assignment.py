@@ -28,7 +28,7 @@ removeOldDB()
 
 def moveAdvisorFiles(fileRoot): #this might have to run first and exit if conditions are met
     from sys import setrecursionlimit
-    setrecursionlimit(100) #doing this because on accidental recursion error, I could DDOS the fileserver
+    setrecursionlimit(10) #doing this because on accidental recursion error, I could DDOS the fileserver
     print(f'\'{envDict["peoplesoft_file"]}\' file found, copying files to storage: {envDict["storage_root"]}')
     from os import path, makedirs, system
     simple_dates = {i:'th' for i in range(32) if str(i)[-1] == '0'} #if last digit in 

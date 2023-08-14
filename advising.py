@@ -45,8 +45,9 @@ class AdvisorAPI: #this "API" maintains a dictionary of AdvisableSet instances, 
         self.AdvisableSets[name].addAdvisors(advisors)
     def findSet(self, Program) -> AdvisableSet:
         for set in self.AdvisableSets:
-          if self.AdvisableSets[set].testProgram(Program): return self.AdvisableSets[set] #I think there's a more efficient, built-in way to iterate through these
-          if self.AdvisableSets[set].testProgram([str(cell or '') for cell in Program]): return self.AdvisableSets[set]
+            if self.AdvisableSets[set].testProgram(Program): return self.AdvisableSets[set] #I think there's a more efficient, built-in way to iterate through these
+            if self.AdvisableSets[set].testProgram([str(cell or '') for cell in Program]): return self.AdvisableSets[set]
+        #we only get to this point if our search for advisablesets failed. 
         nullSet = AdvisableSet('nullSet') #if we don't find the program, above, create a "nullSet"; might be more efficient if this is global at the top?
         nullSet.addAdvisors('Exception: group not found')
         return nullSet
