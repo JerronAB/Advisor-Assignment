@@ -33,6 +33,9 @@ class AdvisableSet: #functionality: store and maintain advisors and their progra
 class AdvisorAPI: #this "API" maintains a dictionary of AdvisableSet instances, and coordinates info from tests.
     def __init__(self) -> None:
         self.AdvisableSets = set()
+        #this lambda is an improvement, but only visually; ideally there would be a way to return value from set by hash. 
+        self.extractSet = lambda programName: [advisable_set for advisable_set in self.AdvisableSets if programName == advisable_set][0]
+    
     #BELOW are the methods for adding new sets/programs/advisors
     def newSet(self, name, advisors=None, programs=None):
         #should we return matching set instead of raising exception?
@@ -41,41 +44,33 @@ class AdvisorAPI: #this "API" maintains a dictionary of AdvisableSet instances, 
         if not advisors is None: newSet.addAdvisors(advisors)
         if not programs is None: newSet.addPrograms(programs)
         self.AdvisableSets.add(newSet)
-    def addProgram(self,name,programs):
-        if name not in self.AdvisableSets: raise Exception(f"The set {name} does not exist")
-        for advSet in self.AdvisableSets: 
-            if advSet == name: advSet.addPrograms(programs)
-    def addAdvisors(self,name,advisors):
-        if name not in self.AdvisableSets: raise Exception(f"The set {name} does not exist")
+    def addProgram(self,programName,programs):
+        program = self.extractSet(programName)
+        program.addPrograms(programs)
+        self.AdvisableSets.add(program)
+    def addAdvisors(self,programName,advisors):
+        advSet = self.extractSet(programName)
+        advSet.addAdvisors(advisors)
+        self.AdvisableSets.add(advSet)
 
-        for set in self.AdvisableSets: #same as findset; figure out how to access using hash of name. 
-            #__eq__ method lets this happen
-            if set == name: set.addAdvisors(advisors)
     #BELOW are the tests to run our advisors/programs against 
     def findSet(self, Program) -> AdvisableSet:
         for set in self.AdvisableSets:
-            #rethink this, have a feeling there's a better way; 
-            #also, I'm not sure what both of these lines do
+            #this is another version of self.extractSet, but testing program instead.
             if set.testProgram(Program): return set
             if set.testProgram([str(cell or '') for cell in Program]): return set
         #we only get to this point if our search for advisablesets failed. 
-        #Program[:1] should represent just the program/plan combo
-        #Program[-1] = ''
-        #for set in self.AdvisableSets:
-        #    if self.AdvisableSets[set].testProgram([str(cell or '') for cell in Program[0:1]]): return self.AdvisableSets[set]
         nullSet = AdvisableSet('nullSet') #if we don't find the program, above, create a "nullSet"; might be more efficient if this is global at the top?
         nullSet.addAdvisors('Exception: group not found')
         return nullSet
-    def testProgramAdvisor(self, advisor, program) -> str: #two-steps here, possibly not efficient. First, find program. Second, match Advisor against program. Can we combine that into one big operation? Or is this easier?
+    def testProgramAdvisor(self, advisor, program) -> str:
         usableSet = self.findSet(program)
-        if usableSet.testAdvisor(advisor): #it's gettin' messy; I'm using try/except to catch when there's no program. Can I do this in findSet instead? Yes. But that won't return an advisablesets object. 
+        if usableSet.testAdvisor(advisor): 
             return 'Correct'
         return usableSet.returnAdvisors()
     def setAdvisorCount(self, advisor, number):
-        #setCount = lambda advSet: self.AdvisableSets[advSet].setAdvisorCount(advisor,number)
-        for advSet in self.AdvisableSets:
+        for advSet in self.AdvisableSets: #I can't think of an improvement that doesn't make this unreadable
             if advSet.testAdvisor(advisor): advSet.setAdvisorCount(advisor,number)
-        #[setCount(advSet) for advSet in self.AdvisableSets if self.AdvisableSets[advSet].testAdvisor(advisor)]
 
 #SQLITE3 section
 import sqlite3 as sqlt
