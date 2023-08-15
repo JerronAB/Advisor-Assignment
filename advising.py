@@ -4,6 +4,8 @@ class AdvisableSet: #functionality: store and maintain advisors and their progra
         self.Advisors = []
         self.Programs = []
         self.advisorCounts = {} #dictionary is my method for setting advisorcounts
+    def __hash__(self) -> int: return hash(self.name)
+    def __eq__(self, __value: str) -> bool: return __value == self.name
     def addAdvisors(self, advisors):
         if type(advisors) is list: [self.Advisors.append(adv) for adv in advisors]
         if type(advisors) is str: self.Advisors.append(advisors)
@@ -30,38 +32,45 @@ class AdvisableSet: #functionality: store and maintain advisors and their progra
 
 class AdvisorAPI: #this "API" maintains a dictionary of AdvisableSet instances, and coordinates info from tests.
     def __init__(self) -> None:
-        self.AdvisableSets = {}
+        self.AdvisableSets = set()
+        #this lambda is an improvement, but only visually; ideally there would be a way to return value from set by hash. 
+        self.extractSet = lambda programName: [advisable_set for advisable_set in self.AdvisableSets if programName == advisable_set][0]
+    
+    #BELOW are the methods for adding new sets/programs/advisors
     def newSet(self, name, advisors=None, programs=None):
+        #should we return matching set instead of raising exception?
         if name in self.AdvisableSets: raise Exception("An advisable set with this name already exists.")
         newSet = AdvisableSet(name)
         if not advisors is None: newSet.addAdvisors(advisors)
         if not programs is None: newSet.addPrograms(programs)
-        self.AdvisableSets[name] = newSet
-    def addProgram(self,name,programs):
-        if name not in self.AdvisableSets: raise Exception(f"The set {name} does not exist")
-        self.AdvisableSets[name].addPrograms(programs)
-    def addAdvisors(self,name,advisors):
-        if name not in self.AdvisableSets: raise Exception(f"The set {name} does not exist")
-        self.AdvisableSets[name].addAdvisors(advisors)
+        self.AdvisableSets.add(newSet)
+    def addProgram(self,programName,programs):
+        program = self.extractSet(programName)
+        program.addPrograms(programs)
+        self.AdvisableSets.add(program)
+    def addAdvisors(self,programName,advisors):
+        advSet = self.extractSet(programName)
+        advSet.addAdvisors(advisors)
+        self.AdvisableSets.add(advSet)
+
+    #BELOW are the tests to run our advisors/programs against 
     def findSet(self, Program) -> AdvisableSet:
         for set in self.AdvisableSets:
-            if self.AdvisableSets[set].testProgram(Program): return self.AdvisableSets[set] #I think there's a more efficient, built-in way to iterate through these
-            if self.AdvisableSets[set].testProgram([str(cell or '') for cell in Program]): return self.AdvisableSets[set]
+            #this is another version of self.extractSet, but testing program instead.
+            if set.testProgram(Program): return set
+            if set.testProgram([str(cell or '') for cell in Program]): return set
         #we only get to this point if our search for advisablesets failed. 
         nullSet = AdvisableSet('nullSet') #if we don't find the program, above, create a "nullSet"; might be more efficient if this is global at the top?
         nullSet.addAdvisors('Exception: group not found')
         return nullSet
-    def testProgramAdvisor(self, advisor, program) -> str: #two-steps here, possibly not efficient. First, find program. Second, match Advisor against program. Can we combine that into one big operation? Or is this easier?
+    def testProgramAdvisor(self, advisor, program) -> str:
         usableSet = self.findSet(program)
-        if usableSet.testAdvisor(advisor): #it's gettin' messy; I'm using try/except to catch when there's no program. Can I do this in findSet instead? Yes. But that won't return an advisablesets object. 
+        if usableSet.testAdvisor(advisor): 
             return 'Correct'
         return usableSet.returnAdvisors()
-    def incrementAdvisor(self, advisor): #Using lambdas to avoid nesting
-        inc = lambda advSet: self.AdvisableSets[advSet].incrementAdvisorCount(advisor)
-        (inc(advSet) for advSet in self.AdvisableSets if self.AdvisableSets[advSet].testAdvisor(advisor))
     def setAdvisorCount(self, advisor, number):
-        setCount = lambda advSet: self.AdvisableSets[advSet].setAdvisorCount(advisor,number)
-        [setCount(advSet) for advSet in self.AdvisableSets if self.AdvisableSets[advSet].testAdvisor(advisor)]
+        for advSet in self.AdvisableSets: #I can't think of an improvement that doesn't make this unreadable
+            if advSet.testAdvisor(advisor): advSet.setAdvisorCount(advisor,number)
 
 #SQLITE3 section
 import sqlite3 as sqlt
