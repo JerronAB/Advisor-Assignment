@@ -1,4 +1,6 @@
-#NEXT STEP: test if AdvAssignment is complete; if so, generate ID strings in CSV
+#NEXT GOAL: can the flushing of the .db file be modified for speed improvements? The current default buffer size is ~8000
+#import time
+#starttime = time.time()
 import advising
 
 envDict = {}
@@ -170,5 +172,9 @@ filtered_export.Columns = header_list
 filtered_export.setData(all_assignments_filtered)
 filtered_export.deDup('EMPLID')
 filtered_export.export(f'{envDict["filtered_file"]}',ignoreExistingFiles=ignoreExistingFiles)
+
+#endtime = time.time()
+#executiontime = endtime - starttime
+#print(f'SCRIPT EXECUTION TIME MAIN BRANCH: {executiontime:.4f} seconds')
 
 exit()
