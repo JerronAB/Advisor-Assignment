@@ -4,6 +4,7 @@ class AdvisableSet: #functionality: store and maintain advisors and their progra
         self.Advisors = []
         self.Programs = []
         self.advisorCounts = {} #dictionary is my method for setting advisorcounts
+    def __hash__(self) -> int: return hash(self.name)
     def addAdvisors(self, advisors):
         if type(advisors) is list: [self.Advisors.append(adv) for adv in advisors]
         if type(advisors) is str: self.Advisors.append(advisors)
@@ -30,13 +31,14 @@ class AdvisableSet: #functionality: store and maintain advisors and their progra
 
 class AdvisorAPI: #this "API" maintains a dictionary of AdvisableSet instances, and coordinates info from tests.
     def __init__(self) -> None:
-        self.AdvisableSets = {}
+        #TRANSITION THIS TO A SET; REMAIN HASHABLE AND SEARCHABLE
+        self.AdvisableSets = set()
     def newSet(self, name, advisors=None, programs=None):
         if name in self.AdvisableSets: raise Exception("An advisable set with this name already exists.")
         newSet = AdvisableSet(name)
         if not advisors is None: newSet.addAdvisors(advisors)
         if not programs is None: newSet.addPrograms(programs)
-        self.AdvisableSets[name] = newSet
+        self.AdvisableSets.add(newSet)
     def addProgram(self,name,programs):
         if name not in self.AdvisableSets: raise Exception(f"The set {name} does not exist")
         self.AdvisableSets[name].addPrograms(programs)
@@ -48,6 +50,10 @@ class AdvisorAPI: #this "API" maintains a dictionary of AdvisableSet instances, 
             if self.AdvisableSets[set].testProgram(Program): return self.AdvisableSets[set] #I think there's a more efficient, built-in way to iterate through these
             if self.AdvisableSets[set].testProgram([str(cell or '') for cell in Program]): return self.AdvisableSets[set]
         #we only get to this point if our search for advisablesets failed. 
+        #Program[:1] should represent just the program/plan combo
+        #Program[-1] = ''
+        #for set in self.AdvisableSets:
+        #    if self.AdvisableSets[set].testProgram([str(cell or '') for cell in Program[0:1]]): return self.AdvisableSets[set]
         nullSet = AdvisableSet('nullSet') #if we don't find the program, above, create a "nullSet"; might be more efficient if this is global at the top?
         nullSet.addAdvisors('Exception: group not found')
         return nullSet
