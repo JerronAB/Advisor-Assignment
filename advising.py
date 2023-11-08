@@ -127,13 +127,13 @@ class tableData:
         dedupped_list = [item for item in self.Data if item[index] not in dedupping_set and not dedupping_set.add(item[index])] #set() does not allow duplicate values. Here we add all items to a set on each loop, and stop loop if item is in set already
         self.Data = ()
         self.setData(dedupped_list)
-    def export(self,filename,exportColumns=True,ignoreExistingFiles=False): #looking at export function to make sure it doesn't export empty cells
+    def export(self,filename,exportColumns=True,ignoreExistingFiles=False,delimiter_str=','): #looking at export function to make sure it doesn't export empty cells
         #this uses the 'writer' function from the csv module
         nonetoString = lambda cells: [str(cell or '') for cell in cells]
         print(f'Writing to... {filename}')
         def writeOut():
             with open(filename, 'w', newline='') as csv_file:
-                my_writer = writer(csv_file, delimiter = ',')
+                my_writer = writer(csv_file, delimiter=delimiter_str)
                 if exportColumns: my_writer.writerow(nonetoString(self.Columns))
                 [my_writer.writerow(nonetoString(row)) for row in self.Data]
         try: 

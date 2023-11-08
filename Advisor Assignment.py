@@ -68,7 +68,7 @@ def moveAdvisorFiles(fileRoot): #this might have to run first and exit if condit
 
 if path.exists(envDict['peoplesoft_file']): moveAdvisorFiles(envDict['storage_root'])
 
-def finalizeAdvChanges(filename, outputFilename, columns=False): #takes all rows w/ empty ID's and creates a new file from them
+def finalizeAdvChanges(filename, outputFilename, columns=False,delimiter_str=','): #takes all rows w/ empty ID's and creates a new file from them
     print('Potentially completed advisor assignment file found...') 
     from os import path
     if path.exists(outputFilename): raise FileExistsError(f'{outputFilename} already exists and will not be overwritten.')
@@ -90,11 +90,11 @@ def finalizeAdvChanges(filename, outputFilename, columns=False): #takes all rows
             return [row[1],advID]
         completedList.mapRows(IDColumns,True)
         completedList.Columns = [completedList.Columns[index] for index in [1,2,3,4,5,7,8]] #change out columns to match...
-        completedList.export(outputFilename, exportColumns=columns) #the data this object is exporting 
+        completedList.export(outputFilename, exportColumns=columns,delimiter_str=delimiter_str) #the data this object is exporting 
 
 if path.exists(envDict['filtered_file']) and not path.exists(envDict['peoplesoft_file']):
     finalizeAdvChanges(envDict['filtered_file'],envDict['peoplesoft_file'])
-    finalizeAdvChanges(envDict['filtered_file'],envDict['email_file'],columns=True) 
+    finalizeAdvChanges(envDict['filtered_file'],envDict['email_file'],columns=True,delimiter_str=';') 
     moveAdvisorFiles(envDict['storage_root'])
     exit()
 
