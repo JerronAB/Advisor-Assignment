@@ -86,10 +86,10 @@ def finalizeAdvChanges(filename, outputFilename, columns=False,delimiter_str=','
                 if sublist[1] == row[4]: 
                     advID = sublist[0] #returning the ID in adivsorList if the name matches
                     break
-            if columns == True: return [row[1],row[2],advID,row[4],row[5],row[7],row[8]] 
+            if columns == True: return [row[1],row[2],advID,row[4],row[5],row[7],row[8],row[12]] 
             return [row[1],advID]
         completedList.mapRows(IDColumns,True)
-        completedList.Columns = [completedList.Columns[index] for index in [1,2,3,4,5,7,8]] #change out columns to match...
+        completedList.Columns = [completedList.Columns[index] for index in [1,2,3,4,5,7,8,12]] #change out columns to match...
         completedList.export(outputFilename, exportColumns=columns,delimiter_str=delimiter_str) #the data this object is exporting 
 
 if path.exists(envDict['filtered_file']) and not path.exists(envDict['peoplesoft_file']):
@@ -128,7 +128,7 @@ adv_counts.dataPull('SELECT * FROM advisor_assignment_count WHERE STDNT_ENRL_STA
 [advisorAPI.setAdvisorCount(item[0],int(item[1])) for item in adv_counts.Data]
 print('Creating new table...')
 #"execute" can be called by any available SQLTableSubclass instance; I used one from above to make things slightly faster
-adv_counts.execute('''CREATE TABLE all_assignments AS SELECT current_term.EMPLID, current_term.STUDENT_NAME, current_term.ADVISOR_ID, current_term.ADVISOR_NAME, current_term.DESCR2, current_term.SUBPLAN_DESCR, sgrp_with_date.STDGR_STDNT_GROUP, sgrp_with_date.STDGR_STDNT_GROUP_LDESC, current_term.STDNT_ENRL_STATUS, current_term_enrollment.ENRL_ADD_DT, sgrp_with_date.EFFDT, SI_Probation.SRVC_IND_CD, SI_Probation.SRVC_IND_REFRNCE, current_term.K_HOME_CAMPUS, previous_term.REQ_TERM, current_term.ACTION_DT, current_term.PROG_ACTION, current_term.STDNT_CAR_NBR
+adv_counts.execute('''CREATE TABLE all_assignments AS SELECT current_term.EMPLID, current_term.STUDENT_NAME, current_term.ADVISOR_ID, current_term.ADVISOR_NAME, current_term.DESCR2, current_term.SUBPLAN_DESCR, sgrp_with_date.STDGR_STDNT_GROUP, sgrp_with_date.STDGR_STDNT_GROUP_LDESC, current_term.STDNT_ENRL_STATUS, current_term_enrollment.ENRL_ADD_DT, sgrp_with_date.EFFDT, current_term.EMAILID, SI_Probation.SRVC_IND_CD, SI_Probation.SRVC_IND_REFRNCE, current_term.K_HOME_CAMPUS, previous_term.REQ_TERM, current_term.ACTION_DT, current_term.PROG_ACTION, current_term.STDNT_CAR_NBR
 FROM (((((current_term LEFT JOIN previous_term ON current_term.EMPLID = previous_term.EMPLID) LEFT JOIN sgrp_with_date ON current_term.EMPLID = sgrp_with_date.EMPLID) LEFT JOIN SI_Probation ON current_term.EMPLID = SI_Probation.EMPLID) LEFT JOIN personal_email ON current_term.EMPLID = personal_email.EMPLID) LEFT JOIN current_term_enrollment ON current_term.EMPLID = current_term_enrollment.EMPLID) LEFT JOIN current_term_owtctr ON current_term.EMPLID = current_term_OWTCTR.EMPLID ORDER BY current_term_enrollment.ENRL_ADD_DT DESC;''')
 
 print('Grabbing and setting dictionary for exemptions...')
