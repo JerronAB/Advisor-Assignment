@@ -29,13 +29,18 @@ class AdvisableSet: #functionality: store and maintain advisors and their progra
         map(testExist,self.Advisors)
         list_of_tuples = sorted(self.advisorCounts.items(),key=lambda x:x[1],) # dictionary.items() returns list of tuples; lambda is accessing second item in each tuple (the advisor count in this case)
         return ', '.join(['{0} ({1})'.format(advisorCount_tuple[0],advisorCount_tuple[1]) for advisorCount_tuple in list_of_tuples])
+    def copy(self):
+        newAdvisableSet = AdvisableSet(f'Copy of {self.name}')
+        newAdvisableSet.Advisors = self.Advisors
+        newAdvisableSet.Programs = self.Programs
+        newAdvisableSet.advisorCounts = self.advisorCounts
+        return newAdvisableSet
 
 class AdvisorAPI: #this "API" maintains a dictionary of AdvisableSet instances, and coordinates info from tests.
     def __init__(self) -> None:
         self.AdvisableSets = set()
         #this lambda is an improvement, but only visually; ideally there would be a way to return value from set by hash. 
         self.extractSet = lambda programName: [advisable_set for advisable_set in self.AdvisableSets if programName == advisable_set][0]
-    
     #BELOW are the methods for adding new sets/programs/advisors
     def newSet(self, name, advisors=None, programs=None):
         #should we return matching set instead of raising exception?
@@ -59,6 +64,17 @@ class AdvisorAPI: #this "API" maintains a dictionary of AdvisableSet instances, 
             #this is another version of self.extractSet, but testing program instead.
             if set.testProgram(Program): return set
             if set.testProgram([str(cell or '') for cell in Program]): return set
+        for set in self.AdvisableSets: #this runs separately so that every other set has a chance to test first
+            Program[2] = ''
+            if set.testProgram([str(cell or '') for cell in Program]):
+                truncatedSet = set.copy()
+                def testAdvisorModified(advisor): return False #always return false so we use our own string for returnAdvisors
+                truncatedSet.testAdvisor = testAdvisorModified
+                def returnAdvisorsModified():
+                    advisorString = ', '.join(truncatedSet.Advisors)
+                    return f"Without STGRP: {', '.join(truncatedSet.Advisors)}"              
+                truncatedSet.returnAdvisors = returnAdvisorsModified
+                return truncatedSet
         #we only get to this point if our search for advisablesets failed. 
         nullSet = AdvisableSet('nullSet') #if we don't find the program, above, create a "nullSet"; might be more efficient if this is global at the top?
         nullSet.addAdvisors('Exception: group not found')
