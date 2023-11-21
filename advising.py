@@ -25,7 +25,7 @@ class AdvisableSet: #functionality: store and maintain advisors and their progra
         self.advisorCounts[advisor] +=1
         print(f'Advisor: {advisor} Count: {self.advisorCounts[advisor]}')
     def returnAdvisors(self) -> str: #study up on built-in dictionary methods for speed/efficiency
-        testExist = lambda advisor: self.AdvisorCount(advisor,0) if advisor not in self.AdvisorCounts else True
+        testExist = lambda advisor: self.setAdvisorCount(advisor,0) if advisor not in self.AdvisorCounts else True
         map(testExist,self.Advisors)
         list_of_tuples = sorted(self.advisorCounts.items(),key=lambda x:x[1],) # dictionary.items() returns list of tuples; lambda is accessing second item in each tuple (the advisor count in this case)
         return ', '.join(['{0} ({1})'.format(advisorCount_tuple[0],advisorCount_tuple[1]) for advisorCount_tuple in list_of_tuples])
