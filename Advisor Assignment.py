@@ -147,10 +147,8 @@ for row in all_assignments_filtered:
     findCells = lambda line: (line[3],[line[4],line[5],line[6]]) 
     advisorCell,programCells = findCells(row) #uses lambda to grab relevant cells
     suggestCell = advisorAPI.testProgramAdvisor(advisorCell,programCells)
-    try: 
-        suggestCell=f'Exemption with: {exempt_dict[int(row[0])][3]} Reason: {exempt_dict[int(row[0])][4]}' #fails if studentID is not in exemption dictionary
-    except: 
-        pass
+    try: suggestCell=f'Exemption with: {exempt_dict[int(row[0])][3]} Reason: {exempt_dict[int(row[0])][4]}' #fails if studentID is not in exemption dictionary
+    except: pass
     row.insert(0,suggestCell)
 #now, all_assignments_filtered is a list of lists that represent our data
 
