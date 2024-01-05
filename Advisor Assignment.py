@@ -2,10 +2,10 @@
 #import time
 #starttime = time.time()
 import advising
+from os import path
 
 envDict = {}
 with open('.env') as envFile:
-    from os import path
     homepath = path.expanduser('~')
     for line in envFile:
         if line[0] != "#": key, value = line.strip().split('=')
@@ -29,7 +29,7 @@ def moveAdvisorFiles(fileRoot): #this might have to run first and exit if condit
     from sys import setrecursionlimit
     setrecursionlimit(10) #doing this because on accidental recursion error, I could DDOS the fileserver
     print(f'\'{envDict["peoplesoft_file"]}\' file found, copying files to storage: {envDict["storage_root"]}')
-    from os import path, makedirs, system
+    from os import makedirs, system
     simple_dates = {i:'th' for i in range(32) if str(i)[-1] == '0'} #if last digit in 
     simple_dates.update({i:'st' for i in range(32) if str(i)[-1] == '1'})
     simple_dates.update({i:'nd' for i in range(32) if str(i)[-1] == '2'})
@@ -68,11 +68,10 @@ def moveAdvisorFiles(fileRoot): #this might have to run first and exit if condit
 
 if path.exists(envDict['peoplesoft_file']): moveAdvisorFiles(envDict['storage_root'])
 
-def finalizeAdvChanges(filename, outputFilename, columns=False,delimiter_str=','): #takes all rows w/ empty ID's and creates a new file from them
-    print('Potentially completed advisor assignment file found...') 
-    from os import path
+def finalizeAdvChanges(completedFilename, outputFilename, columns=False,delimiter_str=',', formatPRN=False): #takes all rows w/ empty ID's and creates a new file from them
+    print('Potentially completed advisor assignment file found...')
     if path.exists(outputFilename): raise FileExistsError(f'{outputFilename} already exists and will not be overwritten.')
-    completedList = advising.CSVTableSubclass(filename,skipPkl=True)
+    completedList = advising.CSVTableSubclass(completedFilename,skipPkl=True)
     #the next 2 lines remove any rows that DON'T have an empty advisor ID
     emptyAdvID = lambda row: row[3] == ''
     completedList.prune(emptyAdvID)
@@ -90,10 +89,11 @@ def finalizeAdvChanges(filename, outputFilename, columns=False,delimiter_str=','
             return [row[1],advID]
         completedList.mapRows(IDColumns,True)
         completedList.Columns = [completedList.Columns[index] for index in [1,2,3,4,5,7,8,12]] #change out columns to match...
-        completedList.export(outputFilename, exportColumns=columns,delimiter_str=delimiter_str) #the data this object is exporting 
+        completedList.export(outputFilename, exportColumns=columns,delimiter_str=delimiter_str,formatPRN=formatPRN) #the data this object is exporting 
 
 if path.exists(envDict['filtered_file']) and not path.exists(envDict['peoplesoft_file']):
-    finalizeAdvChanges(envDict['filtered_file'],envDict['peoplesoft_file'])
+    finalizeAdvChanges(envDict['filtered_file'],envDict['peoplesoft_file'],formatPRN=True)
+    finalizeAdvChanges(envDict['filtered_file'],envDict['peoplesoft_file'],formatPRN=False)
     finalizeAdvChanges(envDict['filtered_file'],envDict['email_file'],columns=True,delimiter_str=';') 
     moveAdvisorFiles(envDict['storage_root'])
     exit()
