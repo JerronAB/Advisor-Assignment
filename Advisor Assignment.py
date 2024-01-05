@@ -144,10 +144,17 @@ all_assignments_filtered = [row for row in all_assignments.Data if row[8] == 'E'
 print('Using advisor associations to test advisor/program matches...')
 #turn this into a function
 for row in all_assignments_filtered:
+    studentID = int(row[0])
+    advisorID = row[2]
     findCells = lambda line: (line[3],[line[4],line[5],line[6]]) 
     advisorCell,programCells = findCells(row) #uses lambda to grab relevant cells
     suggestCell = advisorAPI.testProgramAdvisor(advisorCell,programCells)
-    try: suggestCell=f'Exemption with: {exempt_dict[int(row[0])][3]} Reason: {exempt_dict[int(row[0])][4]}' #fails if studentID is not in exemption dictionary
+    try:
+        advisorExcID = exempt_dict[int(studentID)][2]
+        advisorExcName = exempt_dict[int(studentID)][3]
+        exceptionReason = exempt_dict[int(studentID)][4]
+        if int(advisorExcID) == int(advisorID): suggestCell='Correct'
+        else: suggestCell=f'Exemption with: {advisorExcName} Reason: {exceptionReason}' #fails if studentID is not in exemption dictionary
     except: pass
     row.insert(0,suggestCell)
 #now, all_assignments_filtered is a list of lists that represent our data
@@ -175,8 +182,5 @@ filtered_export.setData(all_assignments_filtered)
 filtered_export.deDup('EMPLID')
 filtered_export.export(f'{envDict["filtered_file"]}',ignoreExistingFiles=ignoreExistingFiles)
 
-#endtime = time.time()
-#executiontime = endtime - starttime
-#print(f'SCRIPT EXECUTION TIME MAIN BRANCH: {executiontime:.4f} seconds')
-
+removeOldDB()
 exit()
