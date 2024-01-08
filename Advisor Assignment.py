@@ -61,8 +61,6 @@ def moveAdvisorFiles(fileRoot):
     copyFile(envDict['filtered_file'])
     copyFile(envDict['unfiltered_file'])
 
-if path.exists(envDict['peoplesoft_file']): moveAdvisorFiles(envDict['storage_root'])
-
 def finalizeAdvChanges(completedFilename, outputFilename, columns=False,delimiter_str=',', formatPRN=False): #takes all rows w/ empty ID's and creates a new file from them
     print('Potentially completed advisor assignment file found...')
     if path.exists(outputFilename): raise FileExistsError(f'{outputFilename} already exists and will not be overwritten.')
@@ -86,11 +84,13 @@ def finalizeAdvChanges(completedFilename, outputFilename, columns=False,delimite
         completedList.Columns = [completedList.Columns[index] for index in [1,2,3,4,5,7,8,12]] #change out columns to match...
         completedList.export(outputFilename, exportColumns=columns,delimiter_str=delimiter_str,formatPRN=formatPRN) #the data this object is exporting 
 
+if path.exists(envDict['peoplesoft_file']): moveAdvisorFiles(envDict['storage_root'])
 if path.exists(envDict['filtered_file']) and not path.exists(envDict['peoplesoft_file']):
     finalizeAdvChanges(envDict['filtered_file'],envDict['peoplesoft_file'],formatPRN=True)
     finalizeAdvChanges(envDict['filtered_file'],envDict['peoplesoft_file'],formatPRN=False)
     finalizeAdvChanges(envDict['filtered_file'],envDict['email_file'],columns=True,delimiter_str=';') 
     moveAdvisorFiles(envDict['storage_root'])
+    exit()
 
 #The actual advisor assignment occurs here. 
 advisorAPI = advising.AdvisorAPI()
