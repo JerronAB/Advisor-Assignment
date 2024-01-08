@@ -1,6 +1,3 @@
-#NEXT GOAL: can the flushing of the .db file be modified for speed improvements? The current default buffer size is ~8000
-#import time
-#starttime = time.time()
 import advising
 from os import path
 
@@ -25,15 +22,14 @@ removeOldDB()
 
 #this first portion checks to see if this program has already been run, and if Advisor Assignment has already been done. 
 
-def moveAdvisorFiles(fileRoot): #this might have to run first and exit if conditions are met
-    from sys import setrecursionlimit
-    setrecursionlimit(10) #doing this because on accidental recursion error, I could DDOS the fileserver
+def moveAdvisorFiles(fileRoot):
     print(f'\'{envDict["peoplesoft_file"]}\' file found, copying files to storage: {envDict["storage_root"]}')
     from os import makedirs, system
-    simple_dates = {i:'th' for i in range(32) if str(i)[-1] == '0'} #if last digit in 
-    simple_dates.update({i:'st' for i in range(32) if str(i)[-1] == '1'})
-    simple_dates.update({i:'nd' for i in range(32) if str(i)[-1] == '2'})
-    simple_dates.update({i:'rd' for i in range(32) if str(i)[-1] == '3'})
+    #dictionary of all numbers in a month and their suffixes
+    simple_dates =      {i:'th' for i in range(32) if str(i)[-1] == '0'}  #10th
+    simple_dates.update({i:'st' for i in range(32) if str(i)[-1] == '1'}) #1st
+    simple_dates.update({i:'nd' for i in range(32) if str(i)[-1] == '2'}) #22nd
+    simple_dates.update({i:'rd' for i in range(32) if str(i)[-1] == '3'}) #23rd
     simple_dates.update({i:'th' for i in range(32) if str(i)[-1] in ('4','5','6','7','8','9')})
     for i in ('11','12','13'): simple_dates[i] = 'th'
     fileserver = fileRoot
@@ -64,7 +60,6 @@ def moveAdvisorFiles(fileRoot): #this might have to run first and exit if condit
     copyFile(envDict['peoplesoft_file'])
     copyFile(envDict['filtered_file'])
     copyFile(envDict['unfiltered_file'])
-    exit()
 
 if path.exists(envDict['peoplesoft_file']): moveAdvisorFiles(envDict['storage_root'])
 
@@ -96,7 +91,6 @@ if path.exists(envDict['filtered_file']) and not path.exists(envDict['peoplesoft
     finalizeAdvChanges(envDict['filtered_file'],envDict['peoplesoft_file'],formatPRN=False)
     finalizeAdvChanges(envDict['filtered_file'],envDict['email_file'],columns=True,delimiter_str=';') 
     moveAdvisorFiles(envDict['storage_root'])
-    exit()
 
 #The actual advisor assignment occurs here. 
 advisorAPI = advising.AdvisorAPI()
@@ -142,7 +136,6 @@ untouched_advisors = envDict['UNTOUCHABLE_ADVISORS'].split(';')
 all_assignments_filtered = [row for row in all_assignments.Data if row[8] == 'E' and row[3] not in untouched_advisors] #filter by enrollment ('E') and advisors
 
 print('Using advisor associations to test advisor/program matches...')
-#turn this into a function
 for row in all_assignments_filtered:
     studentID = int(row[0])
     advisorID = row[2]
