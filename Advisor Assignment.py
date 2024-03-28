@@ -88,7 +88,7 @@ if path.exists(envDict['peoplesoft_file']): moveAdvisorFiles(envDict['storage_ro
 if path.exists(envDict['filtered_file']) and not path.exists(envDict['peoplesoft_file']):
     finalizeAdvChanges(envDict['filtered_file'],envDict['peoplesoft_file'],formatPRN=True)
     finalizeAdvChanges(envDict['filtered_file'],envDict['peoplesoft_file'],formatPRN=False)
-    finalizeAdvChanges(envDict['filtered_file'],envDict['email_file'],columns=True)
+    finalizeAdvChanges(envDict['filtered_file'],envDict['email_file'],columns=True, delimiter_str=';')
     moveAdvisorFiles(envDict['storage_root'])
     exit()
 
