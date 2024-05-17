@@ -161,7 +161,10 @@ class tableData:
             print(f'Writing to... {filename}')
             def writeOut():
                 with open(filename, 'w', newline='') as csv_file:
-                    csvWriter = writer(csv_file, delimiter=delimiter_str)
+                    if delimiter_str == '\t':
+                        csvWriter = writer(csv_file, dialect="excel-tab")
+                    elif delimiter_str == ',':
+                        csvWriter = writer(csv_file, delimiter=delimiter_str)
                     if exportColumns: csvWriter.writerow(nonetoString(self.Columns))
                     [csvWriter.writerow(nonetoString(row)) for row in self.Data]
             try: 
@@ -203,6 +206,7 @@ from csv import reader,writer #maybe this can just become a couple methods on th
 import pickle
 from hashlib import md5
 class CSVTableSubclass(tableData): #creates and interacts with tableData object
+    #THIS OBJECT NEEDS TO BE ABLE TO TAKE TSV's
     def __init__(self, filename=None, skipPkl=False) -> None:
         tableData.__init__(self)
         if filename is not None: self.fileIntake(filename,skipPickle=skipPkl)
@@ -226,8 +230,12 @@ class CSVTableSubclass(tableData): #creates and interacts with tableData object
                 raise Exception('Checksums are not the same; importing CSV.') #fails and moves on if checksums don't match
         except:
             with open(filename, 'r', encoding='ISO-8859-1') as csvfile: #this encoding makes Excel-exported CSV files readable
-                self.name = self.name.replace('.csv','')
-                csvData = [row for row in reader(csvfile)]
+                if ".tsv" in filename: #for tsv files
+                    self.name = self.name.replace('.tsv','')
+                    csvData = [row for row in reader(csvfile, delimiter="\t", quotechar='"')]
+                else: #this is for csv files
+                    self.name = self.name.replace('.csv','')
+                    csvData = [row for row in reader(csvfile)]
                 self.Columns = list(map(lambda input_str: input_str.replace("ï»¿",""), csvData.pop(0)))
                 self.setData(csvData)
                 if not skipPickle:

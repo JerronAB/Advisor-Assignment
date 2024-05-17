@@ -86,11 +86,8 @@ def finalizeAdvChanges(completedFilename, outputFilename, columns=False,delimite
 
 if path.exists(envDict['peoplesoft_file']): moveAdvisorFiles(envDict['storage_root'])
 if path.exists(envDict['filtered_file']) and not path.exists(envDict['peoplesoft_file']):
-    finalizeAdvChanges(envDict['filtered_file'],envDict['peoplesoft_file'],formatPRN=True)
-    #finalizeAdvChanges(envDict['filtered_file'],envDict['peoplesoft_file'],formatPRN=False)
-    #finalizeAdvChanges(envDict['filtered_file'],envDict['email_file'],columns=True, delimiter_str=';')
+    finalizeAdvChanges(envDict['filtered_file'],envDict['peoplesoft_file'], formatPRN=True)
     moveAdvisorFiles(envDict['storage_root'])
-    exit()
 
 #The actual advisor assignment occurs here. 
 advisorAPI = advising.AdvisorAPI()
@@ -173,7 +170,7 @@ filtered_export = advising.CSVTableSubclass()
 filtered_export.Columns = header_list
 filtered_export.setData(all_assignments_filtered)
 filtered_export.deDup('EMPLID')
-filtered_export.export(f'{envDict["filtered_file"]}',ignoreExistingFiles=ignoreExistingFiles)
+#filtered_export.export(f'{envDict["filtered_file"]}', ignoreExistingFiles=ignoreExistingFiles)
+filtered_export.export(f'{envDict["filtered_file"].replace("csv","tsv")}', delimiter_str="\t",ignoreExistingFiles=ignoreExistingFiles)
 
 removeOldDB()
-exit()
