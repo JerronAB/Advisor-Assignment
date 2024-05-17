@@ -206,7 +206,6 @@ from csv import reader,writer #maybe this can just become a couple methods on th
 import pickle
 from hashlib import md5
 class CSVTableSubclass(tableData): #creates and interacts with tableData object
-    #THIS OBJECT NEEDS TO BE ABLE TO TAKE TSV's
     def __init__(self, filename=None, skipPkl=False) -> None:
         tableData.__init__(self)
         if filename is not None: self.fileIntake(filename,skipPickle=skipPkl)

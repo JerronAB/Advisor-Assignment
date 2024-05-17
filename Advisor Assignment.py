@@ -171,6 +171,6 @@ filtered_export.Columns = header_list
 filtered_export.setData(all_assignments_filtered)
 filtered_export.deDup('EMPLID')
 #filtered_export.export(f'{envDict["filtered_file"]}', ignoreExistingFiles=ignoreExistingFiles)
-filtered_export.export(f'{envDict["filtered_file"].replace("csv","tsv")}', delimiter_str="\t",ignoreExistingFiles=ignoreExistingFiles)
+filtered_export.export(f'{envDict["filtered_file"]}', delimiter_str='\t',ignoreExistingFiles=ignoreExistingFiles)
 
 removeOldDB()
