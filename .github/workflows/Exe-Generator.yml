@@ -28,14 +28,14 @@ jobs:
         PyInstaller --onefile "Advisor Assignment.py" --distpath "D:\files"
     
     - name: upload executable
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Executable
         path: "D:\\files\\Advisor Assignment.exe"
         retention-days: 90
     
     - name: upload supporting files
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: supporting files
         path: "D:\\a\\Advisor-Assignment\\Advisor-Assignment\\build"
