@@ -59,20 +59,21 @@ class AdvisorAPI: #this "API" maintains a dictionary of AdvisableSet instances, 
         self.AdvisableSets.add(advSet)
 
     #BELOW are the tests to run our advisors/programs against 
-    def findSet(self, Program) -> AdvisableSet:
+    def findSet(self, Program, advisor="") -> AdvisableSet:
         for set in self.AdvisableSets:
             #this is another version of self.extractSet, but testing program instead.
             if set.testProgram(Program): return set
             if set.testProgram([str(cell or '') for cell in Program]): return set
-        for set in self.AdvisableSets: #this runs separately so that every other set has a chance to test first
+        #this runs separately so that every other set has a chance to test first:
+        for set in self.AdvisableSets:
             Program[2] = ''
             if set.testProgram([str(cell or '') for cell in Program]):
                 truncatedSet = set.copy()
                 def testAdvisorModified(advisor): return False #always return false so we use our own string for returnAdvisors
                 truncatedSet.testAdvisor = testAdvisorModified
                 def returnAdvisorsModified():
-                    advisorString = ', '.join(truncatedSet.Advisors)
-                    return f"Without STGRP: {', '.join(truncatedSet.Advisors)}"              
+                    #access current advisor and test if it matches provided set
+                    return f"Without STGRP: {'CORRECT' if (advisor in truncatedSet.Advisors) else ', '.join(truncatedSet.Advisors)}"
                 truncatedSet.returnAdvisors = returnAdvisorsModified
                 return truncatedSet
         #we only get to this point if our search for advisablesets failed. 
@@ -80,7 +81,7 @@ class AdvisorAPI: #this "API" maintains a dictionary of AdvisableSet instances, 
         nullSet.addAdvisors('Exception: group not found')
         return nullSet
     def testProgramAdvisor(self, advisor, program) -> str:
-        usableSet = self.findSet(program)
+        usableSet = self.findSet(program, advisor)
         if usableSet.testAdvisor(advisor): 
             return 'Correct'
         return usableSet.returnAdvisors()
